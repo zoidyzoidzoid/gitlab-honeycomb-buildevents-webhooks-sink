@@ -1,229 +1,139 @@
 {
-   "object_kind": "pipeline",
-   "object_attributes":{
-      "id": 31,
-      "ref": "master",
-      "tag": false,
-      "sha": "bcbb5ec396a2c0f828686f14fac9b80b780504f2",
-      "before_sha": "bcbb5ec396a2c0f828686f14fac9b80b780504f2",
-      "source": "merge_request_event",
+  "object_kind": "pipeline",
+  "object_attributes": {
+    "id": 352792318,
+    "ref": "master",
+    "tag": false,
+    "sha": "f0e671e3ad975bad49a9e85171e9a12d6c6bb58a",
+    "before_sha": "4169c2aab8431016abc0ba155fa25118c531bb0c",
+    "source": "push",
+    "status": "success",
+    "detailed_status": "passed",
+    "stages": [
+      "test",
+      "build"
+    ],
+    "created_at": "2021-08-13 11:05:27 UTC",
+    "finished_at": "2021-08-13 11:06:51 UTC",
+    "duration": 82,
+    "queued_duration": 1,
+    "variables": []
+  },
+  "merge_request": null,
+  "user": {
+    "id": 240851,
+    "name": "Zoidy",
+    "username": "zoidyzoidzoid",
+    "avatar_url": "https://secure.gravatar.com/avatar/1ba839027c9baffa8871c8a459e49963?s=80&d=identicon",
+    "email": "zoidbergwill@gmail.com"
+  },
+  "project": {
+    "id": 28838800,
+    "name": "sample-gitlab-project",
+    "description": "",
+    "web_url": "https://gitlab.com/zoidyzoidzoid/sample-gitlab-project",
+    "avatar_url": null,
+    "git_ssh_url": "git@gitlab.com:zoidyzoidzoid/sample-gitlab-project.git",
+    "git_http_url": "https://gitlab.com/zoidyzoidzoid/sample-gitlab-project.git",
+    "namespace": "Zoidy",
+    "visibility_level": 20,
+    "path_with_namespace": "zoidyzoidzoid/sample-gitlab-project",
+    "default_branch": "master",
+    "ci_config_path": null
+  },
+  "commit": {
+    "id": "f0e671e3ad975bad49a9e85171e9a12d6c6bb58a",
+    "message": "Add new file",
+    "title": "Add new file",
+    "timestamp": "2021-08-13T11:05:26+00:00",
+    "url": "https://gitlab.com/zoidyzoidzoid/sample-gitlab-project/-/commit/f0e671e3ad975bad49a9e85171e9a12d6c6bb58a",
+    "author": {
+      "name": "Zoidy",
+      "email": "zoidbergwill@gmail.com"
+    }
+  },
+  "builds": [
+    {
+      "id": 1501730154,
+      "stage": "test",
+      "name": "format",
       "status": "success",
-      "stages":[
-         "build",
-         "test",
-         "deploy"
-      ],
-      "created_at": "2016-08-12 15:23:28 UTC",
-      "finished_at": "2016-08-12 15:26:29 UTC",
-      "duration": 63,
-      "variables": [
-        {
-          "key": "NESTOR_PROD_ENVIRONMENT",
-          "value": "us-west-1"
-        }
-      ]
-   },
-    "merge_request": {
-      "id": 1,
-      "iid": 1,
-      "title": "Test",
-      "source_branch": "test",
-      "source_project_id": 1,
-      "target_branch": "master",
-      "target_project_id": 1,
-      "state": "opened",
-      "merge_status": "can_be_merged",
-      "url": "http://192.168.64.1:3005/gitlab-org/gitlab-test/merge_requests/1"
-   },
-   "user":{
-      "id": 1,
-      "name": "Administrator",
-      "username": "root",
-      "avatar_url": "http://www.gravatar.com/avatar/e32bd13e2add097461cb96824b7a829c?s=80\u0026d=identicon",
-      "email": "user_email@gitlab.com"
-   },
-   "project":{
-      "id": 1,
-      "name": "Gitlab Test",
-      "description": "Atque in sunt eos similique dolores voluptatem.",
-      "web_url": "http://192.168.64.1:3005/gitlab-org/gitlab-test",
-      "avatar_url": null,
-      "git_ssh_url": "git@192.168.64.1:gitlab-org/gitlab-test.git",
-      "git_http_url": "http://192.168.64.1:3005/gitlab-org/gitlab-test.git",
-      "namespace": "Gitlab Org",
-      "visibility_level": 20,
-      "path_with_namespace": "gitlab-org/gitlab-test",
-      "default_branch": "master"
-   },
-   "commit":{
-      "id": "bcbb5ec396a2c0f828686f14fac9b80b780504f2",
-      "message": "test\n",
-      "timestamp": "2016-08-12T17:23:21+02:00",
-      "url": "http://example.com/gitlab-org/gitlab-test/commit/bcbb5ec396a2c0f828686f14fac9b80b780504f2",
-      "author":{
-         "name": "User",
-         "email": "user@gitlab.com"
-      }
-   },
-   "builds":[
-      {
-         "id": 380,
-         "stage": "deploy",
-         "name": "production",
-         "status": "skipped",
-         "created_at": "2016-08-12 15:23:28 UTC",
-         "started_at": null,
-         "finished_at": null,
-         "when": "manual",
-         "manual": true,
-         "allow_failure": false,
-         "user":{
-            "id": 1,
-            "name": "Administrator",
-            "username": "root",
-            "avatar_url": "http://www.gravatar.com/avatar/e32bd13e2add097461cb96824b7a829c?s=80\u0026d=identicon",
-            "email": "admin@example.com"
-         },
-         "runner": null,
-         "artifacts_file":{
-            "filename": null,
-            "size": null
-         },
-         "environment": {
-           "name": "production",
-           "action": "start"
-         }
+      "created_at": "2021-08-13 11:05:27 UTC",
+      "started_at": "2021-08-13 11:05:28 UTC",
+      "finished_at": "2021-08-13 11:06:11 UTC",
+      "duration": 42.987966,
+      "queued_duration": 0.774108,
+      "when": "on_success",
+      "manual": false,
+      "allow_failure": false,
+      "user": {
+        "id": 240851,
+        "name": "Zoidy",
+        "username": "zoidyzoidzoid",
+        "avatar_url": "https://secure.gravatar.com/avatar/1ba839027c9baffa8871c8a459e49963?s=80&d=identicon",
+        "email": "zoidbergwill@gmail.com"
       },
-      {
-         "id": 377,
-         "stage": "test",
-         "name": "test-image",
-         "status": "success",
-         "created_at": "2016-08-12 15:23:28 UTC",
-         "started_at": "2016-08-12 15:26:12 UTC",
-         "finished_at": null,
-         "when": "on_success",
-         "manual": false,
-         "allow_failure": false,
-         "user":{
-            "id": 1,
-            "name": "Administrator",
-            "username": "root",
-            "avatar_url": "http://www.gravatar.com/avatar/e32bd13e2add097461cb96824b7a829c?s=80\u0026d=identicon",
-            "email": "admin@example.com"
-         },
-         "runner": {
-            "id": 380987,
-            "description": "shared-runners-manager-6.gitlab.com",
-            "active": true,
-            "is_shared": true,
-            "tags": [
-              "linux",
-              "docker",
-              "shared-runner"
-            ]
-         },
-         "artifacts_file":{
-            "filename": null,
-            "size": null
-         },
-         "environment": null
+      "runner": {
+        "id": 44028,
+        "description": "shared-runners-manager-3.gitlab.com",
+        "runner_type": "instance_type",
+        "active": true,
+        "is_shared": true,
+        "tags": [
+          "docker",
+          "east-c",
+          "gce",
+          "git-annex",
+          "linux",
+          "mongo",
+          "mysql",
+          "postgres",
+          "ruby",
+          "shared"
+        ]
       },
-      {
-         "id": 378,
-         "stage": "test",
-         "name": "test-build",
-         "status": "success",
-         "created_at": "2016-08-12 15:23:28 UTC",
-         "started_at": "2016-08-12 15:26:12 UTC",
-         "finished_at": "2016-08-12 15:26:29 UTC",
-         "when": "on_success",
-         "manual": false,
-         "allow_failure": false,
-         "user":{
-            "id": 1,
-            "name": "Administrator",
-            "username": "root",
-            "avatar_url": "http://www.gravatar.com/avatar/e32bd13e2add097461cb96824b7a829c?s=80\u0026d=identicon",
-            "email": "admin@example.com"
-         },
-         "runner": {
-            "id":380987,
-            "description":"shared-runners-manager-6.gitlab.com",
-            "active":true,
-            "is_shared":true,
-            "tags": [
-              "linux",
-              "docker"
-            ]
-         },
-         "artifacts_file":{
-            "filename": null,
-            "size": null
-         },
-         "environment": null
+      "artifacts_file": {
+        "filename": null,
+        "size": null
       },
-      {
-         "id": 376,
-         "stage": "build",
-         "name": "build-image",
-         "status": "success",
-         "created_at": "2016-08-12 15:23:28 UTC",
-         "started_at": "2016-08-12 15:24:56 UTC",
-         "finished_at": "2016-08-12 15:25:26 UTC",
-         "when": "on_success",
-         "manual": false,
-         "allow_failure": false,
-         "user":{
-            "id": 1,
-            "name": "Administrator",
-            "username": "root",
-            "avatar_url": "http://www.gravatar.com/avatar/e32bd13e2add097461cb96824b7a829c?s=80\u0026d=identicon",
-            "email": "admin@example.com"
-         },
-         "runner": {
-            "id": 380987,
-            "description": "shared-runners-manager-6.gitlab.com",
-            "active": true,
-            "is_shared": true,
-            "tags": [
-              "linux",
-              "docker"
-            ]
-         },
-         "artifacts_file":{
-            "filename": null,
-            "size": null
-         },
-         "environment": null
+      "environment": null
+    },
+    {
+      "id": 1501730157,
+      "stage": "build",
+      "name": "compile",
+      "status": "success",
+      "created_at": "2021-08-13 11:05:27 UTC",
+      "started_at": "2021-08-13 11:06:11 UTC",
+      "finished_at": "2021-08-13 11:06:51 UTC",
+      "duration": 39.260385,
+      "queued_duration": 0.268497,
+      "when": "on_success",
+      "manual": false,
+      "allow_failure": false,
+      "user": {
+        "id": 240851,
+        "name": "Zoidy",
+        "username": "zoidyzoidzoid",
+        "avatar_url": "https://secure.gravatar.com/avatar/1ba839027c9baffa8871c8a459e49963?s=80&d=identicon",
+        "email": "zoidbergwill@gmail.com"
       },
-      {
-         "id": 379,
-         "stage": "deploy",
-         "name": "staging",
-         "status": "created",
-         "created_at": "2016-08-12 15:23:28 UTC",
-         "started_at": null,
-         "finished_at": null,
-         "when": "on_success",
-         "manual": false,
-         "allow_failure": false,
-         "user":{
-            "id": 1,
-            "name": "Administrator",
-            "username": "root",
-            "avatar_url": "http://www.gravatar.com/avatar/e32bd13e2add097461cb96824b7a829c?s=80\u0026d=identicon",
-            "email": "admin@example.com"
-         },
-         "runner": null,
-         "artifacts_file":{
-            "filename": null,
-            "size": null
-         },
-         "environment": {
-           "name": "staging",
-           "action": "start"
-         }
-      }
-   ]
+      "runner": {
+        "id": 380986,
+        "description": "shared-runners-manager-5.gitlab.com",
+        "runner_type": "instance_type",
+        "active": true,
+        "is_shared": true,
+        "tags": [
+          "docker",
+          "gce"
+        ]
+      },
+      "artifacts_file": {
+        "filename": "artifacts.zip",
+        "size": 1311568
+      },
+      "environment": null
+    }
+  ]
 }

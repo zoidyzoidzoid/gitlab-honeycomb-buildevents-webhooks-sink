@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -31,7 +33,7 @@ func healthz(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(w, "OK\n")
 }
 
-func createEvent(cfg *libhoney.Config, traceID string) *libhoney.Event {
+func createEvent(cfg *libhoney.Config) *libhoney.Event {
 	libhoney.UserAgentAddition = fmt.Sprintf("buildevents/%s", Version)
 	libhoney.UserAgentAddition += fmt.Sprintf(" (%s)", "GitLab-CI")
 
@@ -42,54 +44,61 @@ func createEvent(cfg *libhoney.Config, traceID string) *libhoney.Event {
 
 	ev := libhoney.NewEvent()
 	ev.AddField("ci_provider", "GitLab-CI")
-	ev.AddField("trace.trace_id", traceID)
 	ev.AddField("meta.version", Version)
 
 	return ev
 }
 
 func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) *libhoney.Event {
-	ev := createEvent(cfg, fmt.Sprint(p.ObjectAttributes.ID))
-	ev.AddField("ci_provider", "GitLab-CI")
-	// ev.AddField("trace.trace_id", p.ObjectAttributes.ID)
-	ev.AddField("branch", p.ObjectAttributes.Ref)
-	ev.AddField("build_num", p.ObjectAttributes.ID)
+	traceID := fmt.Sprint(p.ObjectAttributes.ID)
+	ev := createEvent(cfg)
+	defer ev.Send()
 	buildURL := fmt.Sprintf("%s/-/pipelines/%d", p.Project.WebURL, p.ObjectAttributes.ID)
-	ev.AddField("build_url", buildURL)
-	ev.AddField("pr_number", p.MergeRequest.Iid)
-	ev.AddField("pr_branch", p.MergeRequest.SourceBranch)
-
-	// TODO: Replace project Id with SOURCE_PROJECT_PATH
-	ev.AddField("pr_repo", p.MergeRequest.SourceProjectID)
-	// "CI_MERGE_REQUEST_SOURCE_PROJECT_PATH": "pr_repo",
-
-	ev.AddField("repo", p.Project.WebURL)
+	ev.Add(map[string]interface{}{
+		"ci_provider":    "GitLab-CI",
+		"service_name":   "pipeline",
+		"trace.span_id":  traceID,
+		"trace.trace_id": traceID,
+		"name":           "build " + traceID,
+		"branch":         p.ObjectAttributes.Ref,
+		"build_num":      p.ObjectAttributes.ID,
+		"build_url":      buildURL,
+		"pr_number":      p.MergeRequest.Iid,
+		"pr_branch":      p.MergeRequest.SourceBranch,
+		// TODO: Replace project Id with SOURCE_PROJECT_PATH
+		"pr_repo": p.MergeRequest.SourceProjectID,
+		"repo":    p.Project.WebURL,
+		"status":  p.ObjectAttributes.Status,
+	})
 
 	// TODO: Something with pipeline status
-	ev.AddField("status", p.ObjectAttributes.Status)
 	fmt.Printf("%+v\n", ev)
 	return ev
 }
 
 func createTraceFromJob(cfg *libhoney.Config, j Job) *libhoney.Event {
-	ev := createEvent(cfg, fmt.Sprint(j.PipelineID))
-	ev.AddField("ci_provider", "GitLab-CI")
-	// ev.AddField("trace.trace_id", j.ObjectAttributes.ID)
-	ev.AddField("branch", j.Ref)
-	ev.AddField("build_num", j.PipelineID)
-	// buildURL := fmt.Sprintf("%s/-/pipelines/%d", j.Project.WebURL, j.ObjectAttributes.ID)
-	// ev.AddField("build_url", buildURL)
-	// ev.AddField("pr_number", j.MergeRequest.Iid)
-	// ev.AddField("pr_branch", j.MergeRequest.SourceBranch)
-
-	// TODO: Replace project Id with SOURCE_PROJECT_PATH
-	// ev.AddField("pr_repo", j.MergeRequest.SourceProjectID)
-	// "CI_MERGE_REQUEST_SOURCE_PROJECT_PATH": "pr_repo",
-
-	ev.AddField("repo", j.Repository.Homepage)
-
-	// TODO: Something with pipeline status
-	ev.AddField("status", j.BuildStatus)
+	parentTraceID := fmt.Sprint(j.PipelineID)
+	md5HashInBytes := md5.Sum([]byte(j.BuildName))
+	md5HashInString := hex.EncodeToString(md5HashInBytes[:])
+	spanID := md5HashInString
+	ev := createEvent(cfg)
+	defer ev.Send()
+	ev.Add(map[string]interface{}{
+		"ci_provider":     "GitLab-CI",
+		"service_name":    "job",
+		"trace.span_id":   spanID,
+		"trace.parent_id": parentTraceID,
+		"name":            fmt.Sprintf(j.BuildName),
+		"branch":          j.Ref,
+		"build_num":       j.PipelineID,
+		"repo":            j.Repository.Homepage,
+		// TODO: Something with job status
+		"status": j.BuildStatus,
+	})
+	if j.BuildStatus != "created" && j.BuildStatus != "running" {
+		ev.AddField("duration_ms", j.BuildDuration*1000)
+		ev.AddField("queued_duration_ms", j.BuildQueuedDuration*1000)
+	}
 	fmt.Printf("%+v\n", ev)
 	return ev
 }
@@ -106,8 +115,7 @@ func handlePipeline(cfg *libhoney.Config, w http.ResponseWriter, body []byte) {
 		}
 		return
 	}
-	ev := createTraceFromPipeline(cfg, pipeline)
-	defer ev.Send()
+	createTraceFromPipeline(cfg, pipeline)
 	fmt.Fprintf(w, "Thanks!\n")
 }
 
@@ -124,8 +132,7 @@ func handleJob(cfg *libhoney.Config, w http.ResponseWriter, body []byte) {
 		return
 	}
 	// fmt.Printf("%+v\n", job)
-	ev := createTraceFromJob(cfg, job)
-	defer ev.Send()
+	createTraceFromJob(cfg, job)
 	fmt.Fprintf(w, "Thanks!\n")
 }
 
@@ -211,10 +218,10 @@ func main() {
 
 	// Put 'em all together
 	root.AddCommand(
-		// commandBuild(&config, &filename, &ciProvider),
-		// commandStep(&config, &filename, &ciProvider),
-		// commandCmd(&config, &filename, &ciProvider),
-		// commandWatch(&config, &filename, &ciProvider, &wcfg),
+	// commandBuild(&config, &filename, &ciProvider),
+	// commandStep(&config, &filename, &ciProvider),
+	// commandCmd(&config, &filename, &ciProvider),
+	// commandWatch(&config, &filename, &ciProvider, &wcfg),
 	)
 
 	// Do the work
@@ -390,29 +397,30 @@ func (r *Job) Marshal() ([]byte, error) {
 }
 
 type Job struct {
-	ObjectKind         string      `json:"object_kind"`
-	Ref                string      `json:"ref"`
-	Tag                bool        `json:"tag"`
-	BeforeSHA          string      `json:"before_sha"`
-	SHA                string      `json:"sha"`
-	BuildID            int64       `json:"build_id"`
-	BuildName          string      `json:"build_name"`
-	BuildStage         string      `json:"build_stage"`
-	BuildStatus        string      `json:"build_status"`
-	BuildCreatedAt     string      `json:"build_created_at"`
-	BuildStartedAt     interface{} `json:"build_started_at"`
-	BuildFinishedAt    interface{} `json:"build_finished_at"`
-	BuildDuration      interface{} `json:"build_duration"`
-	BuildAllowFailure  bool        `json:"build_allow_failure"`
-	BuildFailureReason string      `json:"build_failure_reason"`
-	PipelineID         int64       `json:"pipeline_id"`
-	ProjectID          int64       `json:"project_id"`
-	ProjectName        string      `json:"project_name"`
-	User               User        `json:"user"`
-	Commit             JobCommit   `json:"commit"`
-	Repository         Repository  `json:"repository"`
-	Runner             Runner      `json:"runner"`
-	Environment        interface{} `json:"environment"`
+	ObjectKind          string      `json:"object_kind"`
+	Ref                 string      `json:"ref"`
+	Tag                 bool        `json:"tag"`
+	BeforeSHA           string      `json:"before_sha"`
+	SHA                 string      `json:"sha"`
+	BuildID             int64       `json:"build_id"`
+	BuildName           string      `json:"build_name"`
+	BuildStage          string      `json:"build_stage"`
+	BuildStatus         string      `json:"build_status"`
+	BuildCreatedAt      string      `json:"build_created_at"`
+	BuildStartedAt      string      `json:"build_started_at"`
+	BuildFinishedAt     string      `json:"build_finished_at"`
+	BuildDuration       float64     `json:"build_duration"`
+	BuildQueuedDuration float64     `json:"build_queued_duration"`
+	BuildAllowFailure   bool        `json:"build_allow_failure"`
+	BuildFailureReason  string      `json:"build_failure_reason"`
+	PipelineID          int64       `json:"pipeline_id"`
+	ProjectID           int64       `json:"project_id"`
+	ProjectName         string      `json:"project_name"`
+	User                User        `json:"user"`
+	Commit              JobCommit   `json:"commit"`
+	Repository          Repository  `json:"repository"`
+	Runner              Runner      `json:"runner"`
+	Environment         interface{} `json:"environment"`
 }
 
 type JobCommit struct {

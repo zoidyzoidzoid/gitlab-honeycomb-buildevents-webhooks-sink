@@ -1,57 +1,61 @@
 {
-  "object_kind": "build",
-  "ref": "gitlab-script-trigger",
-  "tag": false,
-  "before_sha": "2293ada6b400935a1378653304eaf6221e0fdb8f",
-  "sha": "2293ada6b400935a1378653304eaf6221e0fdb8f",
-  "build_id": 1977,
-  "build_name": "test",
-  "build_stage": "test",
-  "build_status": "created",
-  "build_created_at": "2021-02-23T02:41:37.886Z",
-  "build_started_at": null,
-  "build_finished_at": null,
-  "build_duration": null,
-  "build_allow_failure": false,
-  "build_failure_reason": "script_failure",
-  "pipeline_id": 2366,
-  "project_id": 380,
-  "project_name": "gitlab-org/gitlab-test",
-  "user": {
-    "id": 3,
-    "name": "User",
-    "email": "user@gitlab.com",
-    "avatar_url": "http://www.gravatar.com/avatar/e32bd13e2add097461cb96824b7a829c?s=80\u0026d=identicon",
-    "email": "admin@example.com"
-  },
-  "commit": {
-    "id": 2366,
-    "sha": "2293ada6b400935a1378653304eaf6221e0fdb8f",
-    "message": "test\n",
-    "author_name": "User",
-    "author_email": "user@gitlab.com",
-    "status": "created",
-    "duration": null,
-    "started_at": null,
-    "finished_at": null
-  },
-  "repository": {
-    "name": "gitlab_test",
-    "description": "Atque in sunt eos similique dolores voluptatem.",
-    "homepage": "http://192.168.64.1:3005/gitlab-org/gitlab-test",
-    "git_ssh_url": "git@192.168.64.1:gitlab-org/gitlab-test.git",
-    "git_http_url": "http://192.168.64.1:3005/gitlab-org/gitlab-test.git",
-    "visibility_level": 20
-  },
-  "runner": {
-    "active": true,
-    "is_shared": false,
-    "id": 380987,
-    "description": "shared-runners-manager-6.gitlab.com",
-    "tags": [
-      "linux",
-      "docker"
-    ]
-  },
-  "environment": null
+    "object_kind": "build",
+    "ref": "master",
+    "tag": false,
+    "before_sha": "4169c2aab8431016abc0ba155fa25118c531bb0c",
+    "sha": "f0e671e3ad975bad49a9e85171e9a12d6c6bb58a",
+    "build_id": 1501730157,
+    "build_name": "compile",
+    "build_stage": "build",
+    "build_status": "success",
+    "build_created_at": "2021-08-13 11:05:27 UTC",
+    "build_started_at": "2021-08-13 11:06:11 UTC",
+    "build_finished_at": "2021-08-13 11:06:51 UTC",
+    "build_duration": 39.260385,
+    "build_queued_duration": 0.268497,
+    "build_allow_failure": false,
+    "build_failure_reason": "unknown_failure",
+    "pipeline_id": 352792318,
+    "runner": {
+        "id": 380986,
+        "description": "shared-runners-manager-5.gitlab.com",
+        "runner_type": "instance_type",
+        "active": true,
+        "is_shared": true,
+        "tags": [
+            "docker",
+            "gce"
+        ]
+    },
+    "project_id": 28838800,
+    "project_name": "Zoidy / sample-gitlab-project",
+    "user": {
+        "id": 240851,
+        "name": "Zoidy",
+        "username": "zoidyzoidzoid",
+        "avatar_url": "https://secure.gravatar.com/avatar/1ba839027c9baffa8871c8a459e49963?s=80&d=identicon",
+        "email": "zoidbergwill@gmail.com"
+    },
+    "commit": {
+        "id": 352792318,
+        "sha": "f0e671e3ad975bad49a9e85171e9a12d6c6bb58a",
+        "message": "Add new file",
+        "author_name": "Zoidy",
+        "author_email": "zoidbergwill@gmail.com",
+        "author_url": "https://gitlab.com/zoidyzoidzoid",
+        "status": "success",
+        "duration": 82,
+        "started_at": "2021-08-13 11:05:28 UTC",
+        "finished_at": "2021-08-13 11:06:51 UTC"
+    },
+    "repository": {
+        "name": "sample-gitlab-project",
+        "url": "git@gitlab.com:zoidyzoidzoid/sample-gitlab-project.git",
+        "description": "",
+        "homepage": "https://gitlab.com/zoidyzoidzoid/sample-gitlab-project",
+        "git_http_url": "https://gitlab.com/zoidyzoidzoid/sample-gitlab-project.git",
+        "git_ssh_url": "git@gitlab.com:zoidyzoidzoid/sample-gitlab-project.git",
+        "visibility_level": 20
+    },
+    "environment": null
 }

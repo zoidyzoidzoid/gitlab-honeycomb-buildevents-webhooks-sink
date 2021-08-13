@@ -48,7 +48,7 @@ func createEvent(cfg *libhoney.Config, traceID string) *libhoney.Event {
 	return ev
 }
 
-func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) {
+func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) *libhoney.Event {
 	ev := createEvent(cfg, fmt.Sprint(p.ObjectAttributes.ID))
 	ev.AddField("ci_provider", "GitLab-CI")
 	// ev.AddField("trace.trace_id", p.ObjectAttributes.ID)
@@ -68,9 +68,10 @@ func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) {
 	// TODO: Something with pipeline status
 	ev.AddField("status", p.ObjectAttributes.Status)
 	fmt.Printf("%+v\n", ev)
+	return ev
 }
 
-func createTraceFromJob(cfg *libhoney.Config, j Job) {
+func createTraceFromJob(cfg *libhoney.Config, j Job) *libhoney.Event {
 	ev := createEvent(cfg, fmt.Sprint(j.PipelineID))
 	ev.AddField("ci_provider", "GitLab-CI")
 	// ev.AddField("trace.trace_id", j.ObjectAttributes.ID)
@@ -90,6 +91,7 @@ func createTraceFromJob(cfg *libhoney.Config, j Job) {
 	// TODO: Something with pipeline status
 	ev.AddField("status", j.BuildStatus)
 	fmt.Printf("%+v\n", ev)
+	return ev
 }
 
 // buildevents build $CI_PIPELINE_ID $BUILD_START (failure|success)
@@ -104,7 +106,8 @@ func handlePipeline(cfg *libhoney.Config, w http.ResponseWriter, body []byte) {
 		}
 		return
 	}
-	createTraceFromPipeline(cfg, pipeline)
+	ev := createTraceFromPipeline(cfg, pipeline)
+	defer ev.Send()
 	fmt.Fprintf(w, "Thanks!\n")
 }
 
@@ -121,7 +124,8 @@ func handleJob(cfg *libhoney.Config, w http.ResponseWriter, body []byte) {
 		return
 	}
 	// fmt.Printf("%+v\n", job)
-	createTraceFromJob(cfg, job)
+	ev := createTraceFromJob(cfg, job)
+	defer ev.Send()
 	fmt.Fprintf(w, "Thanks!\n")
 }
 
@@ -205,10 +209,10 @@ func main() {
 
 	// Put 'em all together
 	root.AddCommand(
-	// commandBuild(&config, &filename, &ciProvider),
-	// commandStep(&config, &filename, &ciProvider),
-	// commandCmd(&config, &filename, &ciProvider),
-	// commandWatch(&config, &filename, &ciProvider, &wcfg),
+		// commandBuild(&config, &filename, &ciProvider),
+		// commandStep(&config, &filename, &ciProvider),
+		// commandCmd(&config, &filename, &ciProvider),
+		// commandWatch(&config, &filename, &ciProvider, &wcfg),
 	)
 
 	// Do the work

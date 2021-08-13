@@ -49,7 +49,10 @@ func createEvent(cfg *libhoney.Config) *libhoney.Event {
 	return ev
 }
 
-func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) *libhoney.Event {
+func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) {
+	if p.ObjectAttributes.Status == "created" || p.ObjectAttributes.Status == "running" {
+		return
+	}
 	traceID := fmt.Sprint(p.ObjectAttributes.ID)
 	ev := createEvent(cfg)
 	defer ev.Send()
@@ -69,7 +72,7 @@ func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) *libhoney.Event {
 		"pr_repo": p.MergeRequest.SourceProjectID,
 		"repo":    p.Project.WebURL,
 		// TODO: Something with pipeline status
-		"status":  p.ObjectAttributes.Status,
+		"status": p.ObjectAttributes.Status,
 	})
 	if p.ObjectAttributes.Status != "created" && p.ObjectAttributes.Status != "running" {
 		ev.AddField("duration_ms", p.ObjectAttributes.Duration*1000)
@@ -81,14 +84,16 @@ func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) *libhoney.Event {
 	if e != nil {
 		log.Println("Failed to parse timestamp:", e)
 		fmt.Printf("%+v\n", ev)
-		return ev
+		return
 	}
 	ev.Timestamp = timestamp
 	fmt.Printf("%+v\n", ev)
-	return ev
 }
 
-func createTraceFromJob(cfg *libhoney.Config, j Job) *libhoney.Event {
+func createTraceFromJob(cfg *libhoney.Config, j Job) {
+	if j.BuildStatus == "created" || j.BuildStatus == "running" {
+		return
+	}
 	parentTraceID := fmt.Sprint(j.PipelineID)
 	md5HashInBytes := md5.Sum([]byte(j.BuildName))
 	md5HashInString := hex.EncodeToString(md5HashInBytes[:])
@@ -117,11 +122,11 @@ func createTraceFromJob(cfg *libhoney.Config, j Job) *libhoney.Event {
 	if e != nil {
 		log.Println("Failed to parse timestamp:", e)
 		fmt.Printf("%+v\n", ev)
-		return ev
+		return
 	}
 	ev.Timestamp = timestamp
 	fmt.Printf("%+v\n", ev)
-	return ev
+	return
 }
 
 // buildevents build $CI_PIPELINE_ID $BUILD_START (failure|success)

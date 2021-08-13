@@ -70,6 +70,10 @@ func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) *libhoney.Event {
 		"repo":    p.Project.WebURL,
 		"status":  p.ObjectAttributes.Status,
 	})
+	if p.ObjectAttributes.Status != "created" && p.ObjectAttributes.Status != "running" {
+		ev.AddField("duration_ms", p.ObjectAttributes.Duration*1000)
+		ev.AddField("queued_duration_ms", p.ObjectAttributes.QueuedDuration*1000)
+	}
 
 	// TODO: Something with pipeline status
 	fmt.Printf("%+v\n", ev)
@@ -87,6 +91,7 @@ func createTraceFromJob(cfg *libhoney.Config, j Job) *libhoney.Event {
 		"ci_provider":     "GitLab-CI",
 		"service_name":    "job",
 		"trace.span_id":   spanID,
+		"trace.trace_id":  parentTraceID,
 		"trace.parent_id": parentTraceID,
 		"name":            fmt.Sprintf(j.BuildName),
 		"branch":          j.Ref,
@@ -268,13 +273,13 @@ func (r *Pipeline) Marshal() ([]byte, error) {
 }
 
 type Pipeline struct {
-	ObjectKind       string           `json:"object_kind"`
-	ObjectAttributes ObjectAttributes `json:"object_attributes"`
-	MergeRequest     MergeRequest     `json:"merge_request"`
-	User             User             `json:"user"`
-	Project          Project          `json:"project"`
-	Commit           Commit           `json:"commit"`
-	Builds           []Build          `json:"builds"`
+	ObjectKind       string                   `json:"object_kind"`
+	ObjectAttributes PipelineObjectAttributes `json:"object_attributes"`
+	MergeRequest     MergeRequest             `json:"merge_request"`
+	User             User                     `json:"user"`
+	Project          Project                  `json:"project"`
+	Commit           Commit                   `json:"commit"`
+	Builds           []Build                  `json:"builds"`
 }
 
 type Build struct {
@@ -346,19 +351,20 @@ type MergeRequest struct {
 	URL             string `json:"url"`
 }
 
-type ObjectAttributes struct {
-	ID         int64      `json:"id"`
-	Ref        string     `json:"ref"`
-	Tag        bool       `json:"tag"`
-	SHA        string     `json:"sha"`
-	BeforeSHA  string     `json:"before_sha"`
-	Source     string     `json:"source"`
-	Status     string     `json:"status"`
-	Stages     []string   `json:"stages"`
-	CreatedAt  string     `json:"created_at"`
-	FinishedAt string     `json:"finished_at"`
-	Duration   int64      `json:"duration"`
-	Variables  []Variable `json:"variables"`
+type PipelineObjectAttributes struct {
+	ID             int64      `json:"id"`
+	Ref            string     `json:"ref"`
+	Tag            bool       `json:"tag"`
+	SHA            string     `json:"sha"`
+	BeforeSHA      string     `json:"before_sha"`
+	Source         string     `json:"source"`
+	Status         string     `json:"status"`
+	Stages         []string   `json:"stages"`
+	CreatedAt      string     `json:"created_at"`
+	FinishedAt     string     `json:"finished_at"`
+	Duration       int64      `json:"duration"`
+	QueuedDuration int64      `json:"queued_duration"`
+	Variables      []Variable `json:"variables"`
 }
 
 type Variable struct {

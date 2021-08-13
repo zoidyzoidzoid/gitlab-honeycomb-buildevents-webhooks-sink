@@ -68,6 +68,7 @@ func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) *libhoney.Event {
 		// TODO: Replace project Id with SOURCE_PROJECT_PATH
 		"pr_repo": p.MergeRequest.SourceProjectID,
 		"repo":    p.Project.WebURL,
+		// TODO: Something with pipeline status
 		"status":  p.ObjectAttributes.Status,
 	})
 	if p.ObjectAttributes.Status != "created" && p.ObjectAttributes.Status != "running" {
@@ -75,7 +76,14 @@ func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) *libhoney.Event {
 		ev.AddField("queued_duration_ms", p.ObjectAttributes.QueuedDuration*1000)
 	}
 
-	// TODO: Something with pipeline status
+	timestamp, e := time.Parse("2006-01-02 15:04:05 MST", p.ObjectAttributes.CreatedAt)
+	// This error handling is a bit janky, I should tidy it up
+	if e != nil {
+		log.Println("Failed to parse timestamp:", e)
+		fmt.Printf("%+v\n", ev)
+		return ev
+	}
+	ev.Timestamp = timestamp
 	fmt.Printf("%+v\n", ev)
 	return ev
 }
@@ -104,6 +112,14 @@ func createTraceFromJob(cfg *libhoney.Config, j Job) *libhoney.Event {
 		ev.AddField("duration_ms", j.BuildDuration*1000)
 		ev.AddField("queued_duration_ms", j.BuildQueuedDuration*1000)
 	}
+	timestamp, e := time.Parse("2006-01-02 15:04:05 MST", j.BuildCreatedAt)
+	// This error handling is a bit janky, I should tidy it up
+	if e != nil {
+		log.Println("Failed to parse timestamp:", e)
+		fmt.Printf("%+v\n", ev)
+		return ev
+	}
+	ev.Timestamp = timestamp
 	fmt.Printf("%+v\n", ev)
 	return ev
 }

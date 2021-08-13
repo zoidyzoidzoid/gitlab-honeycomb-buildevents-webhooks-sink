@@ -153,8 +153,10 @@ func hello(cfg *libhoney.Config, w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	if eventType == "Pipeline Hook" {
+		fmt.Println("Received pipeline webhook:", body)
 		handlePipeline(cfg, w, body)
 	} else if eventType == "Job Hook" {
+		fmt.Println("Received job webhook:", body)
 		handleJob(cfg, w, body)
 	} else {
 		http.Error(w, fmt.Sprintf("Invalid event type: %s", eventType), http.StatusBadRequest)

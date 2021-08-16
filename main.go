@@ -49,9 +49,23 @@ func createEvent(cfg *libhoney.Config) *libhoney.Event {
 	return ev
 }
 
-func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) {
+func parseTime(dt string) (*time.Time, error) {
+	var timestamp time.Time
+	// Try GitLab upstream datetime format
+	timestamp, err := time.Parse("2006-01-02 15:04:05 MST", dt)
+	if (err != nil) {
+		// Try our GitLab Enterprise datetime format
+		timestamp, err = time.Parse("2006-01-02 15:04:05 -0700", dt)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &timestamp, nil
+}
+
+func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) error {
 	if p.ObjectAttributes.Status == "created" || p.ObjectAttributes.Status == "running" {
-		return
+		return nil
 	}
 	traceID := fmt.Sprint(p.ObjectAttributes.ID)
 	ev := createEvent(cfg)
@@ -79,20 +93,21 @@ func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) {
 		ev.AddField("queued_duration_ms", p.ObjectAttributes.QueuedDuration*1000)
 	}
 
-	timestamp, e := time.Parse("2006-01-02 15:04:05 MST", p.ObjectAttributes.CreatedAt)
+	timestamp, err := parseTime(p.ObjectAttributes.CreatedAt)
 	// This error handling is a bit janky, I should tidy it up
-	if e != nil {
-		log.Println("Failed to parse timestamp:", e)
+	if err != nil {
+		log.Println("Failed to parse timestamp:", err)
 		fmt.Printf("%+v\n", ev)
-		return
+		return err
 	}
-	ev.Timestamp = timestamp
+	ev.Timestamp = *timestamp
 	fmt.Printf("%+v\n", ev)
+	return nil
 }
 
-func createTraceFromJob(cfg *libhoney.Config, j Job) {
+func createTraceFromJob(cfg *libhoney.Config, j Job) error {
 	if j.BuildStatus == "created" || j.BuildStatus == "running" {
-		return
+		return nil
 	}
 	parentTraceID := fmt.Sprint(j.PipelineID)
 	md5HashInBytes := md5.Sum([]byte(j.BuildName))
@@ -117,16 +132,16 @@ func createTraceFromJob(cfg *libhoney.Config, j Job) {
 		ev.AddField("duration_ms", j.BuildDuration*1000)
 		ev.AddField("queued_duration_ms", j.BuildQueuedDuration*1000)
 	}
-	timestamp, e := time.Parse("2006-01-02 15:04:05 MST", j.BuildCreatedAt)
+	timestamp, err := parseTime(j.BuildStartedAt)
 	// This error handling is a bit janky, I should tidy it up
-	if e != nil {
-		log.Println("Failed to parse timestamp:", e)
+	if err != nil {
+		log.Println("Failed to parse timestamp:", err)
 		fmt.Printf("%+v\n", ev)
-		return
+		return err
 	}
-	ev.Timestamp = timestamp
+	ev.Timestamp = *timestamp
 	fmt.Printf("%+v\n", ev)
-	return
+	return nil
 }
 
 // buildevents build $CI_PIPELINE_ID $BUILD_START (failure|success)
@@ -141,7 +156,11 @@ func handlePipeline(cfg *libhoney.Config, w http.ResponseWriter, body []byte) {
 		}
 		return
 	}
-	createTraceFromPipeline(cfg, pipeline)
+	err = createTraceFromPipeline(cfg, pipeline)
+	if err != nil {
+		fmt.Fprintf(w, "Error creating trace from pipeline object: %s", err)
+		return
+	}
 	fmt.Fprintf(w, "Thanks!\n")
 }
 
@@ -158,7 +177,11 @@ func handleJob(cfg *libhoney.Config, w http.ResponseWriter, body []byte) {
 		return
 	}
 	// fmt.Printf("%+v\n", job)
-	createTraceFromJob(cfg, job)
+	err = createTraceFromJob(cfg, job)
+	if err != nil {
+		fmt.Fprintf(w, "Error creating trace from job object: %s", err)
+		return
+	}
 	fmt.Fprintf(w, "Thanks!\n")
 }
 

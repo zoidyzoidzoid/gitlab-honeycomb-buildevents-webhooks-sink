@@ -53,7 +53,7 @@ func parseTime(dt string) (*time.Time, error) {
 	var timestamp time.Time
 	// Try GitLab upstream datetime format
 	timestamp, err := time.Parse("2006-01-02 15:04:05 MST", dt)
-	if (err != nil) {
+	if err != nil {
 		// Try our GitLab Enterprise datetime format
 		timestamp, err = time.Parse("2006-01-02 15:04:05 -0700", dt)
 		if err != nil {
@@ -63,9 +63,9 @@ func parseTime(dt string) (*time.Time, error) {
 	return &timestamp, nil
 }
 
-func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) error {
+func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) (*libhoney.Event, error) {
 	if p.ObjectAttributes.Status == "created" || p.ObjectAttributes.Status == "running" {
-		return nil
+		return nil, nil
 	}
 	traceID := fmt.Sprint(p.ObjectAttributes.ID)
 	ev := createEvent(cfg)
@@ -98,16 +98,16 @@ func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) error {
 	if err != nil {
 		log.Println("Failed to parse timestamp:", err)
 		fmt.Printf("%+v\n", ev)
-		return err
+		return ev, err
 	}
 	ev.Timestamp = *timestamp
 	fmt.Printf("%+v\n", ev)
-	return nil
+	return ev, nil
 }
 
-func createTraceFromJob(cfg *libhoney.Config, j Job) error {
+func createTraceFromJob(cfg *libhoney.Config, j Job) (*libhoney.Event, error) {
 	if j.BuildStatus == "created" || j.BuildStatus == "running" {
-		return nil
+		return nil, nil
 	}
 	parentTraceID := fmt.Sprint(j.PipelineID)
 	md5HashInBytes := md5.Sum([]byte(j.BuildName))
@@ -137,11 +137,11 @@ func createTraceFromJob(cfg *libhoney.Config, j Job) error {
 	if err != nil {
 		log.Println("Failed to parse timestamp:", err)
 		fmt.Printf("%+v\n", ev)
-		return err
+		return ev, err
 	}
 	ev.Timestamp = *timestamp
 	fmt.Printf("%+v\n", ev)
-	return nil
+	return ev, nil
 }
 
 // buildevents build $CI_PIPELINE_ID $BUILD_START (failure|success)
@@ -156,7 +156,7 @@ func handlePipeline(cfg *libhoney.Config, w http.ResponseWriter, body []byte) {
 		}
 		return
 	}
-	err = createTraceFromPipeline(cfg, pipeline)
+	_, err = createTraceFromPipeline(cfg, pipeline)
 	if err != nil {
 		fmt.Fprintf(w, "Error creating trace from pipeline object: %s", err)
 		return
@@ -177,7 +177,7 @@ func handleJob(cfg *libhoney.Config, w http.ResponseWriter, body []byte) {
 		return
 	}
 	// fmt.Printf("%+v\n", job)
-	err = createTraceFromJob(cfg, job)
+	_, err = createTraceFromJob(cfg, job)
 	if err != nil {
 		fmt.Fprintf(w, "Error creating trace from job object: %s", err)
 		return

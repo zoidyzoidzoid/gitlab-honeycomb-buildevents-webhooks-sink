@@ -124,6 +124,7 @@ func createTraceFromJob(cfg *libhoney.Config, j Job) (*libhoney.Event, error) {
 		"name":            fmt.Sprintf(j.BuildName),
 		"branch":          j.Ref,
 		"build_num":       j.PipelineID,
+		"build_id":        j.BuildID,
 		"repo":            j.Repository.Homepage,
 		// TODO: Something with job status
 		"status": j.BuildStatus,

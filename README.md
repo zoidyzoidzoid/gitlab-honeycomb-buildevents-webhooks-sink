@@ -20,6 +20,8 @@ We use the same logic as [buildevents](https://github.com/honeycombio/buildevent
 
 Work in Progress example of using `buildevents cmd` here: https://gitlab.com/zoidyzoidzoid/sample-gitlab-project/-/blob/master/.gitlab-ci.yml
 
+![image](https://user-images.githubusercontent.com/2572493/131356377-f335f439-bcc0-43ef-9315-9213d0dbf0ab.png)
+
 ## Details
 
 ```

@@ -6,7 +6,7 @@ If you set this up, and add the public URL with the path of `/api/message`, to y
 
 We support the same environment variables as [buildevents](https://github.com/honeycombio/buildevents), most importantly `BUILDEVENT_APIKEY`. They are all documented [here](https://github.com/honeycombio/buildevents#environment-variables).
 
-Check out the buildevents project that hugely influenced this project at https://github.com/honeycombio/buildevents
+Check out the buildevents project that hugely influenced this project at https://github.com/honeycombio/buildevents . Another way to solve this would be doing something like the Circle CI's API usage with the [`buildevents watch`](https://github.com/honeycombio/buildevents#watch) command.
 
 ## Overview
 
@@ -18,7 +18,7 @@ We use the same logic as [buildevents](https://github.com/honeycombio/buildevent
 
 #### Example
 
-TODO
+Work in Progress example of using `buildevents cmd` here: https://gitlab.com/zoidyzoidzoid/sample-gitlab-project/-/blob/master/.gitlab-ci.yml
 
 ## Details
 

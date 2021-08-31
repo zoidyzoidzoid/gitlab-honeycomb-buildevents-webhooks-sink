@@ -72,16 +72,19 @@ func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) (*libhoney.Event,
 	defer ev.Send()
 	buildURL := fmt.Sprintf("%s/-/pipelines/%d", p.Project.WebURL, p.ObjectAttributes.ID)
 	ev.Add(map[string]interface{}{
-		"ci_provider":    "GitLab-CI",
+		// Basic trace information
 		"service_name":   "pipeline",
 		"trace.span_id":  traceID,
 		"trace.trace_id": traceID,
 		"name":           "build " + traceID,
-		"branch":         p.ObjectAttributes.Ref,
-		"build_num":      p.ObjectAttributes.ID,
-		"build_url":      buildURL,
-		"pr_number":      p.MergeRequest.Iid,
-		"pr_branch":      p.MergeRequest.SourceBranch,
+
+		// CI information
+		"ci_provider": "GitLab-CI",
+		"branch":      p.ObjectAttributes.Ref,
+		"build_num":   p.ObjectAttributes.ID,
+		"build_url":   buildURL,
+		"pr_number":   p.MergeRequest.Iid,
+		"pr_branch":   p.MergeRequest.SourceBranch,
 		// TODO: Replace project Id with SOURCE_PROJECT_PATH
 		"pr_repo": p.MergeRequest.SourceProjectID,
 		"repo":    p.Project.WebURL,
@@ -116,16 +119,19 @@ func createTraceFromJob(cfg *libhoney.Config, j Job) (*libhoney.Event, error) {
 	ev := createEvent(cfg)
 	defer ev.Send()
 	ev.Add(map[string]interface{}{
-		"ci_provider":     "GitLab-CI",
+		// Basic trace information
 		"service_name":    "job",
 		"trace.span_id":   spanID,
 		"trace.trace_id":  parentTraceID,
 		"trace.parent_id": parentTraceID,
 		"name":            fmt.Sprintf(j.BuildName),
-		"branch":          j.Ref,
-		"build_num":       j.PipelineID,
-		"build_id":        j.BuildID,
-		"repo":            j.Repository.Homepage,
+
+		// CI information
+		"ci_provider": "GitLab-CI",
+		"branch":      j.Ref,
+		"build_num":   j.PipelineID,
+		"build_id":    j.BuildID,
+		"repo":        j.Repository.Homepage,
 		// TODO: Something with job status
 		"status": j.BuildStatus,
 	})

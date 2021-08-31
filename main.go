@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/honeycombio/libhoney-go"
@@ -134,6 +135,11 @@ func createTraceFromJob(cfg *libhoney.Config, j Job) (*libhoney.Event, error) {
 		"repo":        j.Repository.Homepage,
 		// TODO: Something with job status
 		"status": j.BuildStatus,
+
+		// Runner information
+		"ci_runner":      j.Runner.Description,
+		"ci_runner_id":   j.Runner.ID,
+		"ci_runner_tags": strings.Join(j.Runner.Tags, ","),
 	})
 	if j.BuildStatus != "created" && j.BuildStatus != "running" {
 		ev.AddField("duration_ms", j.BuildDuration*1000)

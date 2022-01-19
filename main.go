@@ -65,7 +65,10 @@ func parseTime(dt string) (*time.Time, error) {
 }
 
 func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) (*libhoney.Event, error) {
-	if p.ObjectAttributes.Status == "created" || p.ObjectAttributes.Status == "running" {
+	// if p.ObjectAttributes.Status == "created" || p.ObjectAttributes.Status == "running" || p.ObjectAttributes.Status == "pending" {
+	// 	return nil, nil
+	// }
+	if p.ObjectAttributes.Duration == 0 || p.ObjectAttributes.Status == "running" {
 		return nil, nil
 	}
 	traceID := fmt.Sprint(p.ObjectAttributes.ID)
@@ -91,11 +94,10 @@ func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) (*libhoney.Event,
 		"repo":    p.Project.WebURL,
 		// TODO: Something with pipeline status
 		"status": p.ObjectAttributes.Status,
+
+		"duration_ms": p.ObjectAttributes.Duration*1000,
+		"queued_duration_ms": p.ObjectAttributes.QueuedDuration*1000,
 	})
-	if p.ObjectAttributes.Status != "created" && p.ObjectAttributes.Status != "running" {
-		ev.AddField("duration_ms", p.ObjectAttributes.Duration*1000)
-		ev.AddField("queued_duration_ms", p.ObjectAttributes.QueuedDuration*1000)
-	}
 
 	timestamp, err := parseTime(p.ObjectAttributes.CreatedAt)
 	// This error handling is a bit janky, I should tidy it up
@@ -110,7 +112,10 @@ func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) (*libhoney.Event,
 }
 
 func createTraceFromJob(cfg *libhoney.Config, j Job) (*libhoney.Event, error) {
-	if j.BuildStatus == "created" || j.BuildStatus == "running" {
+	// if j.BuildStatus == "created" || j.BuildStatus == "running" || j.BuildStatus == "pending" {
+	// 	return nil, nil
+	// }
+	if j.BuildDuration == 0 || j.BuildStatus == "running" {
 		return nil, nil
 	}
 	parentTraceID := fmt.Sprint(j.PipelineID)
@@ -140,11 +145,10 @@ func createTraceFromJob(cfg *libhoney.Config, j Job) (*libhoney.Event, error) {
 		"ci_runner":      j.Runner.Description,
 		"ci_runner_id":   j.Runner.ID,
 		"ci_runner_tags": strings.Join(j.Runner.Tags, ","),
+
+		"duration_ms": j.BuildDuration*1000,
+		"queued_duration_ms": j.BuildQueuedDuration*1000,
 	})
-	if j.BuildStatus != "created" && j.BuildStatus != "running" {
-		ev.AddField("duration_ms", j.BuildDuration*1000)
-		ev.AddField("queued_duration_ms", j.BuildQueuedDuration*1000)
-	}
 	timestamp, err := parseTime(j.BuildStartedAt)
 	// This error handling is a bit janky, I should tidy it up
 	if err != nil {
@@ -171,6 +175,7 @@ func handlePipeline(cfg *libhoney.Config, w http.ResponseWriter, body []byte) {
 	}
 	_, err = createTraceFromPipeline(cfg, pipeline)
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(w, "Error creating trace from pipeline object: %s", err)
 		return
 	}
@@ -192,6 +197,7 @@ func handleJob(cfg *libhoney.Config, w http.ResponseWriter, body []byte) {
 	// fmt.Printf("%+v\n", job)
 	_, err = createTraceFromJob(cfg, job)
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(w, "Error creating trace from job object: %s", err)
 		return
 	}

@@ -34,3 +34,7 @@ POST /api/message: receive webhooks
 [GitLab Job Webhooks Documentation](https://docs.gitlab.com/ee/user/project/integrations/webhooks.html#job-events)
 
 https://github.com/honeycombio/buildevents/blob/06856ef24981b796af33bcf03e004b9cba4cb687/common.go#L68-L77
+
+## Similar Projects
+
+- [sluongng/buildkite-honeycomb-exporter](https://github.com/sluongng/buildkite-honeycomb-exporter/) - A honeycomb exporter that uses opentelemetry to export buildkite pipeline information to honeycomb or other observability platforms.

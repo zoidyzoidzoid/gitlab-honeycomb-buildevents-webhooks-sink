@@ -95,8 +95,8 @@ func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) (*libhoney.Event,
 		// TODO: Something with pipeline status
 		"status": p.ObjectAttributes.Status,
 
-		"duration_ms": p.ObjectAttributes.Duration*1000,
-		"queued_duration_ms": p.ObjectAttributes.QueuedDuration*1000,
+		"duration_ms":        p.ObjectAttributes.Duration * 1000,
+		"queued_duration_ms": p.ObjectAttributes.QueuedDuration * 1000,
 	})
 
 	timestamp, err := parseTime(p.ObjectAttributes.CreatedAt)
@@ -146,8 +146,8 @@ func createTraceFromJob(cfg *libhoney.Config, j Job) (*libhoney.Event, error) {
 		"ci_runner_id":   j.Runner.ID,
 		"ci_runner_tags": strings.Join(j.Runner.Tags, ","),
 
-		"duration_ms": j.BuildDuration*1000,
-		"queued_duration_ms": j.BuildQueuedDuration*1000,
+		"duration_ms":        j.BuildDuration * 1000,
+		"queued_duration_ms": j.BuildQueuedDuration * 1000,
 	})
 	timestamp, err := parseTime(j.BuildStartedAt)
 	// This error handling is a bit janky, I should tidy it up

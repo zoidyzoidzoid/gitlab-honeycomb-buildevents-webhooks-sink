@@ -239,7 +239,7 @@ func handleRequest(defaultConfig *libhoney.Config, w http.ResponseWriter, req *h
 	}
 }
 
-func commandRoot(cfg *libhoney.Config, filename *string, ciProvider *string) *cobra.Command {
+func commandRoot(cfg *libhoney.Config) *cobra.Command {
 	root := &cobra.Command{
 		Version: Version,
 		Use:     "buildevents",
@@ -265,32 +265,14 @@ about your Continuous Integration builds.`,
 		root.PersistentFlags().Lookup("apihost").Value.Set(apihost)
 	}
 
-	root.PersistentFlags().StringVarP(filename, "filename", "f", "", "[env.BUILDEVENT_FILE] the path of a text file holding arbitrary key=val pairs (multi-line-capable, logfmt style) to be added to the Honeycomb event")
-	if fname, ok := os.LookupEnv("BUILDEVENT_FILE"); ok {
-		root.PersistentFlags().Lookup("filename").Value.Set(fname)
-	}
-
-	root.PersistentFlags().StringVarP(ciProvider, "provider", "p", "GitLab-CI", "[env.BUILDEVENT_CIPROVIDER] if unset, will inspect the environment to try to detect common CI providers.")
-
 	return root
 }
 
 func main() {
 	defer libhoney.Close()
 	var config libhoney.Config
-	var filename string
-	var ciProvider string
-	// var wcfg watchConfig
 
-	root := commandRoot(&config, &filename, &ciProvider)
-
-	// Put 'em all together
-	root.AddCommand(
-	// commandBuild(&config, &filename, &ciProvider),
-	// commandStep(&config, &filename, &ciProvider),
-	// commandCmd(&config, &filename, &ciProvider),
-	// commandWatch(&config, &filename, &ciProvider, &wcfg),
-	)
+	root := commandRoot(&config)
 
 	// Do the work
 	if err := root.Execute(); err != nil {

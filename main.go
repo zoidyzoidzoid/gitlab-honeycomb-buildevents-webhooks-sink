@@ -204,7 +204,7 @@ func handleJob(cfg *libhoney.Config, w http.ResponseWriter, body []byte) {
 	fmt.Fprintf(w, "Thanks!\n")
 }
 
-func hello(cfg *libhoney.Config, w http.ResponseWriter, req *http.Request) {
+func handleRequest(defaultConfig *libhoney.Config, w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		http.Error(w, "Unsupported method", http.StatusMethodNotAllowed)
 		return
@@ -301,7 +301,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", healthz)
 	mux.HandleFunc("/api/message", func(rw http.ResponseWriter, r *http.Request) {
-		hello(&config, rw, r)
+		handleRequest(&config, rw, r)
 	})
 	mux.HandleFunc("/", home)
 

@@ -204,7 +204,7 @@ func handleJob(cfg *libhoney.Config, w http.ResponseWriter, body []byte) {
 	fmt.Fprintf(w, "Thanks!\n")
 }
 
-func handleRequest(defaultConfig *libhoney.Config, w http.ResponseWriter, req *http.Request) {
+func handleRequest(cfg *libhoney.Config, w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		http.Error(w, "Unsupported method", http.StatusMethodNotAllowed)
 		return

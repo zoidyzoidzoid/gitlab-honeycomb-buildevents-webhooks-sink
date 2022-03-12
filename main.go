@@ -21,33 +21,40 @@ import (
 // build/release process.
 var Version = "dev"
 
-func home(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintf(w, `# GitLab Honeycomb Buildevents Webhooks Sink
+func home(w http.ResponseWriter, _ *http.Request) {
+	_, err := fmt.Fprintf(w, `# GitLab Honeycomb Buildevents Webhooks Sink
 
 GET /healthz: healthcheck
 
 POST /api/message: receive array of notifications
 `)
+	if err != nil {
+		log.Printf("home: failed to write to http response writer: %s", err)
+	}
 }
 
-func healthz(w http.ResponseWriter, req *http.Request) {
+func healthz(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func createEvent(cfg *libhoney.Config) *libhoney.Event {
+func createEvent(cfg *libhoney.Config) (*libhoney.Event, error) {
 	libhoney.UserAgentAddition = fmt.Sprintf("buildevents/%s", Version)
 	libhoney.UserAgentAddition += fmt.Sprintf(" (%s)", "GitLab-CI")
 
 	if cfg.APIKey == "" {
 		cfg.Transmission = &transmission.WriterSender{}
 	}
-	libhoney.Init(*cfg)
+
+	err := libhoney.Init(*cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialise libhoney: %w", err)
+	}
 
 	ev := libhoney.NewEvent()
 	ev.AddField("ci_provider", "GitLab-CI")
 	ev.AddField("meta.version", Version)
 
-	return ev
+	return ev, nil
 }
 
 func parseTime(dt string) (*time.Time, error) {
@@ -72,10 +79,14 @@ func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) (*libhoney.Event,
 		return nil, nil
 	}
 	traceID := fmt.Sprint(p.ObjectAttributes.ID)
-	ev := createEvent(cfg)
+	ev, err := createEvent(cfg)
+	if err != nil {
+		return nil, err
+	}
+
 	defer ev.Send()
 	buildURL := fmt.Sprintf("%s/-/pipelines/%d", p.Project.WebURL, p.ObjectAttributes.ID)
-	ev.Add(map[string]interface{}{
+	err = ev.Add(map[string]interface{}{
 		// Basic trace information
 		"service_name":   "pipeline",
 		"trace.span_id":  traceID,
@@ -122,9 +133,13 @@ func createTraceFromJob(cfg *libhoney.Config, j Job) (*libhoney.Event, error) {
 	md5HashInBytes := md5.Sum([]byte(j.BuildName))
 	md5HashInString := hex.EncodeToString(md5HashInBytes[:])
 	spanID := md5HashInString
-	ev := createEvent(cfg)
+	ev, err := createEvent(cfg)
+	if err != nil {
+		return nil, err
+	}
+
 	defer ev.Send()
-	ev.Add(map[string]interface{}{
+	err = ev.Add(map[string]interface{}{
 		// Basic trace information
 		"service_name":    "job",
 		"trace.span_id":   spanID,
@@ -149,6 +164,10 @@ func createTraceFromJob(cfg *libhoney.Config, j Job) (*libhoney.Event, error) {
 		"duration_ms":        j.BuildDuration * 1000,
 		"queued_duration_ms": j.BuildQueuedDuration * 1000,
 	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to add fields to event: %w", err)
+	}
+
 	timestamp, err := parseTime(j.BuildStartedAt)
 	// This error handling is a bit janky, I should tidy it up
 	if err != nil {
@@ -176,10 +195,17 @@ func handlePipeline(cfg *libhoney.Config, w http.ResponseWriter, body []byte) {
 	_, err = createTraceFromPipeline(cfg, pipeline)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "Error creating trace from pipeline object: %s", err)
+		_, respErr := fmt.Fprintf(w, "Error creating trace from pipeline object: %s", err)
+		if respErr != nil {
+			log.Printf("failed to write error response: %s", respErr)
+		}
 		return
 	}
-	fmt.Fprintf(w, "Thanks!\n")
+
+	_, respErr := fmt.Fprint(w, "Thanks!\n")
+	if respErr != nil {
+		log.Printf("failed to write success response: %s", respErr)
+	}
 }
 
 // buildevents step $CI_PIPELINE_ID $STEP_SPAN_ID $STEP_START $CI_JOB_NAME
@@ -198,10 +224,17 @@ func handleJob(cfg *libhoney.Config, w http.ResponseWriter, body []byte) {
 	_, err = createTraceFromJob(cfg, job)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "Error creating trace from job object: %s", err)
+		_, respErr := fmt.Fprintf(w, "Error creating trace from job object: %s", err)
+		if respErr != nil {
+			log.Printf("failed to write error response: %s", respErr)
+		}
 		return
 	}
-	fmt.Fprintf(w, "Thanks!\n")
+
+	_, respErr := fmt.Fprint(w, "Thanks!\n")
+	if respErr != nil {
+		log.Printf("failed to write success response: %s", respErr)
+	}
 }
 
 func handleRequest(cfg *libhoney.Config, w http.ResponseWriter, req *http.Request) {
@@ -252,17 +285,26 @@ about your Continuous Integration builds.`,
 	root.PersistentFlags().StringVarP(&cfg.APIKey, "apikey", "k", "", "[env.BUILDEVENT_APIKEY] the Honeycomb authentication token")
 	if apikey, ok := os.LookupEnv("BUILDEVENT_APIKEY"); ok {
 		// https://github.com/spf13/viper/issues/461#issuecomment-366831834
-		root.PersistentFlags().Lookup("apikey").Value.Set(apikey)
+		err := root.PersistentFlags().Lookup("apikey").Value.Set(apikey)
+		if err != nil {
+			log.Fatalf("failed to configure `apikey`: %s", err)
+		}
 	}
 
 	root.PersistentFlags().StringVarP(&cfg.Dataset, "dataset", "d", "buildevents", "[env.BUILDEVENT_DATASET] the name of the Honeycomb dataset to which to send these events")
 	if dataset, ok := os.LookupEnv("BUILDEVENT_DATASET"); ok {
-		root.PersistentFlags().Lookup("dataset").Value.Set(dataset)
+		err := root.PersistentFlags().Lookup("dataset").Value.Set(dataset)
+		if err != nil {
+			log.Fatalf("failed to configure `dataset`: %s", err)
+		}
 	}
 
 	root.PersistentFlags().StringVarP(&cfg.APIHost, "apihost", "a", "https://api.honeycomb.io", "[env.BUILDEVENT_APIHOST] the hostname for the Honeycomb API server to which to send this event")
 	if apihost, ok := os.LookupEnv("BUILDEVENT_APIHOST"); ok {
-		root.PersistentFlags().Lookup("apihost").Value.Set(apihost)
+		err := root.PersistentFlags().Lookup("apihost").Value.Set(apihost)
+		if err != nil {
+			log.Fatalf("failed to configure `apihost`: %s", err)
+		}
 	}
 
 	return root

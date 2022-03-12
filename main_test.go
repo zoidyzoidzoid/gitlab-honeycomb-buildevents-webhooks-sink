@@ -74,7 +74,11 @@ func Test_createEvent(t *testing.T) {
 	wantedFields["meta.version"] = "dev"
 	wantedUserAgentAddition := "buildevents/dev (GitLab-CI)"
 	t.Run("valid event", func(t *testing.T) {
-		got := createEvent(&config)
+		got, err := createEvent(&config)
+		if err != nil {
+			t.Errorf("failed to create event: %s", err)
+		}
+
 		for k, v := range got.Fields() {
 			if v != wantedFields[k] {
 				t.Errorf("event fields key '%s' = %v, want %v", k, v, wantedFields[k])

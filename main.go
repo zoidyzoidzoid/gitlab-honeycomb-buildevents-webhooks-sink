@@ -17,7 +17,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// This is the default value that should be overridden in the
+// Version is the default value that should be overridden in the
 // build/release process.
 var Version = "dev"
 
@@ -31,7 +31,7 @@ POST /api/message: receive array of notifications
 }
 
 func healthz(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintf(w, "OK\n")
+	w.WriteHeader(http.StatusOK)
 }
 
 func createEvent(cfg *libhoney.Config) *libhoney.Event {

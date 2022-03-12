@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -57,20 +58,6 @@ func createEvent(cfg *libhoney.Config) (*libhoney.Event, error) {
 	return ev, nil
 }
 
-func parseTime(dt string) (*time.Time, error) {
-	var timestamp time.Time
-	// Try GitLab upstream datetime format
-	timestamp, err := time.Parse("2006-01-02 15:04:05 MST", dt)
-	if err != nil {
-		// Try our GitLab Enterprise datetime format
-		timestamp, err = time.Parse("2006-01-02 15:04:05 -0700", dt)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return &timestamp, nil
-}
-
 func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) (*libhoney.Event, error) {
 	// if p.ObjectAttributes.Status == "created" || p.ObjectAttributes.Status == "running" || p.ObjectAttributes.Status == "pending" {
 	// 	return nil, nil
@@ -113,6 +100,9 @@ func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) (*libhoney.Event,
 		return nil, fmt.Errorf("failed to add fields to event: %w", err)
 	}
 
+	if p.ObjectAttributes.CreatedAt.IsZero() {
+		return nil, errors.New("Pipeline.ObjectAttributes.CreatedAt is zero")
+	}
 	ev.Timestamp = p.ObjectAttributes.CreatedAt
 	fmt.Printf("%+v\n", ev)
 	return ev, nil
@@ -164,14 +154,10 @@ func createTraceFromJob(cfg *libhoney.Config, j Job) (*libhoney.Event, error) {
 		return nil, fmt.Errorf("failed to add fields to event: %w", err)
 	}
 
-	timestamp, err := parseTime(j.BuildStartedAt)
-	// This error handling is a bit janky, I should tidy it up
-	if err != nil {
-		log.Println("Failed to parse timestamp:", err)
-		fmt.Printf("%+v\n", ev)
-		return ev, err
+	if j.BuildStartedAt.IsZero() {
+		return nil, errors.New("BuildStartedAt time is not set")
 	}
-	ev.Timestamp = *timestamp
+	ev.Timestamp = j.BuildStartedAt
 	fmt.Printf("%+v\n", ev)
 	return ev, nil
 }
@@ -181,7 +167,7 @@ func handlePipeline(cfg *libhoney.Config, w http.ResponseWriter, body []byte) {
 	var pipeline Pipeline
 	err := json.Unmarshal(body, &pipeline)
 	if err != nil {
-		log.Print("Error unmarshalling request body.")
+		log.Printf("Error unmarshalling request body: %s", err)
 		_, printErr := fmt.Fprintf(w, "Error unmarshalling request body.")
 		if printErr != nil {
 			log.Print("Error printing error on error unmarshalling request body.")
@@ -370,9 +356,9 @@ type Build struct {
 	Stage         string        `json:"stage"`
 	Name          string        `json:"name"`
 	Status        string        `json:"status"`
-	CreatedAt     string        `json:"created_at"`
-	StartedAt     *string       `json:"started_at"`
-	FinishedAt    *string       `json:"finished_at"`
+	CreatedAt     time.Time     `json:"created_at"`
+	StartedAt     time.Time     `json:"started_at"`
+	FinishedAt    time.Time     `json:"finished_at"`
 	When          string        `json:"when"`
 	Manual        bool          `json:"manual"`
 	AllowFailure  bool          `json:"allow_failure"`
@@ -495,9 +481,9 @@ type Job struct {
 	BuildName           string      `json:"build_name"`
 	BuildStage          string      `json:"build_stage"`
 	BuildStatus         string      `json:"build_status"`
-	BuildCreatedAt      string      `json:"build_created_at"`
-	BuildStartedAt      string      `json:"build_started_at"`
-	BuildFinishedAt     string      `json:"build_finished_at"`
+	BuildCreatedAt      time.Time   `json:"build_created_at"`
+	BuildStartedAt      time.Time   `json:"build_started_at"`
+	BuildFinishedAt     time.Time   `json:"build_finished_at"`
 	BuildDuration       float64     `json:"build_duration"`
 	BuildQueuedDuration float64     `json:"build_queued_duration"`
 	BuildAllowFailure   bool        `json:"build_allow_failure"`

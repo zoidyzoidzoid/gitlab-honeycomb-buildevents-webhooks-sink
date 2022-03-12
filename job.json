@@ -8,9 +8,9 @@
     "build_name": "compile",
     "build_stage": "build",
     "build_status": "success",
-    "build_created_at": "2021-08-13 11:05:27 UTC",
-    "build_started_at": "2021-08-13 11:06:11 UTC",
-    "build_finished_at": "2021-08-13 11:06:51 UTC",
+    "build_created_at": "2021-08-13T11:05:27.000Z",
+    "build_started_at": "2021-08-13T11:06:11.000Z",
+    "build_finished_at": "2021-08-13T11:06:51.000Z",
     "build_duration": 39.260385,
     "build_queued_duration": 0.268497,
     "build_allow_failure": false,
@@ -45,8 +45,8 @@
         "author_url": "https://gitlab.com/zoidyzoidzoid",
         "status": "success",
         "duration": 82,
-        "started_at": "2021-08-13 11:05:28 UTC",
-        "finished_at": "2021-08-13 11:06:51 UTC"
+        "started_at": "2021-08-13T11:05:28.000Z",
+        "finished_at": "2021-08-13T11:06:51.000Z"
     },
     "repository": {
         "name": "sample-gitlab-project",

@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -233,7 +233,7 @@ func handleRequest(cfg *libhoney.Config, w http.ResponseWriter, req *http.Reques
 		return
 	}
 	eventType := eventHeaders[0]
-	body, err := ioutil.ReadAll(req.Body)
+	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		log.Print("Error reading request body.")
 		_, printErr := fmt.Fprintf(w, "Error reading request body.")

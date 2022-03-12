@@ -224,14 +224,17 @@ func handleRequest(cfg *libhoney.Config, w http.ResponseWriter, req *http.Reques
 		http.Error(w, "Unsupported method", http.StatusMethodNotAllowed)
 		return
 	}
-	eventHeaders := req.Header["X-Gitlab-Event"]
-	if len(eventHeaders) < 1 {
+	eventHeaders, exists := req.Header["X-Gitlab-Event"]
+	if !exists {
 		http.Error(w, "Missing header: X-Giitlab-Event", http.StatusBadRequest)
 		return
-	} else if len(eventHeaders) > 1 {
+	}
+
+	if len(eventHeaders) > 1 {
 		http.Error(w, "Invalid header: X-Gitlab-Event", http.StatusBadRequest)
 		return
 	}
+
 	eventType := eventHeaders[0]
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
@@ -242,15 +245,16 @@ func handleRequest(cfg *libhoney.Config, w http.ResponseWriter, req *http.Reques
 		}
 		return
 	}
-	if eventType == "Pipeline Hook" {
+
+	switch eventType {
+	case "Pipeline Hook":
 		fmt.Println("Received pipeline webhook:", string(body))
 		handlePipeline(cfg, w, body)
-	} else if eventType == "Job Hook" {
+	case "Job Hook":
 		fmt.Println("Received job webhook:", string(body))
 		handleJob(cfg, w, body)
-	} else {
+	default:
 		http.Error(w, fmt.Sprintf("Invalid event type: %s", eventType), http.StatusBadRequest)
-		return
 	}
 }
 

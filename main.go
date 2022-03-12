@@ -46,11 +46,6 @@ func createEvent(cfg *libhoney.Config) (*libhoney.Event, error) {
 		cfg.Transmission = &transmission.WriterSender{}
 	}
 
-	err := libhoney.Init(*cfg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialise libhoney: %w", err)
-	}
-
 	ev := libhoney.NewEvent()
 	ev.AddField("ci_provider", "GitLab-CI")
 	ev.AddField("meta.version", Version)
@@ -307,6 +302,12 @@ func main() {
 		libhoney.Close()
 		os.Exit(1)
 	}
+
+	err := libhoney.Init(config)
+	if err != nil {
+		log.Fatalf("failed to initialise libhoney: %s", err)
+	}
+
 	log.SetOutput(os.Stdout)
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", healthz)

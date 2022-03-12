@@ -109,15 +109,11 @@ func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) (*libhoney.Event,
 		"duration_ms":        p.ObjectAttributes.Duration * 1000,
 		"queued_duration_ms": p.ObjectAttributes.QueuedDuration * 1000,
 	})
-
-	timestamp, err := parseTime(p.ObjectAttributes.CreatedAt)
-	// This error handling is a bit janky, I should tidy it up
 	if err != nil {
-		log.Println("Failed to parse timestamp:", err)
-		fmt.Printf("%+v\n", ev)
-		return ev, err
+		return nil, fmt.Errorf("failed to add fields to event: %w", err)
 	}
-	ev.Timestamp = *timestamp
+
+	ev.Timestamp = p.ObjectAttributes.CreatedAt
 	fmt.Printf("%+v\n", ev)
 	return ev, nil
 }
@@ -447,8 +443,8 @@ type PipelineObjectAttributes struct {
 	Source         string     `json:"source"`
 	Status         string     `json:"status"`
 	Stages         []string   `json:"stages"`
-	CreatedAt      string     `json:"created_at"`
-	FinishedAt     string     `json:"finished_at"`
+	CreatedAt      time.Time  `json:"created_at"`
+	FinishedAt     time.Time  `json:"finished_at"`
 	Duration       int64      `json:"duration"`
 	QueuedDuration int64      `json:"queued_duration"`
 	Variables      []Variable `json:"variables"`

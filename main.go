@@ -99,7 +99,7 @@ func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) (*libhoney.Event,
 		return nil, errors.New("Pipeline.ObjectAttributes.CreatedAt is zero")
 	}
 	ev.Timestamp = p.ObjectAttributes.CreatedAt
-	fmt.Printf("%+v\n", ev)
+	log.Printf("%+v\n", ev)
 	return ev, nil
 }
 
@@ -153,7 +153,7 @@ func createTraceFromJob(cfg *libhoney.Config, j Job) (*libhoney.Event, error) {
 		return nil, errors.New("BuildStartedAt time is not set")
 	}
 	ev.Timestamp = j.BuildStartedAt
-	fmt.Printf("%+v\n", ev)
+	log.Printf("%+v\n", ev)
 	return ev, nil
 }
 
@@ -243,10 +243,10 @@ func handleRequest(cfg *libhoney.Config, w http.ResponseWriter, req *http.Reques
 
 	switch eventType {
 	case "Pipeline Hook":
-		fmt.Println("Received pipeline webhook:", string(body))
+		log.Println("Received pipeline webhook:", string(body))
 		handlePipeline(cfg, w, body)
 	case "Job Hook":
-		fmt.Println("Received job webhook:", string(body))
+		log.Println("Received job webhook:", string(body))
 		handleJob(cfg, w, body)
 	default:
 		http.Error(w, fmt.Sprintf("Invalid event type: %s", eventType), http.StatusBadRequest)
@@ -326,7 +326,7 @@ func main() {
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
-	fmt.Printf("Starting server on http://%s\n", srv.Addr)
+	log.Printf("Starting server on http://%s\n", srv.Addr)
 	log.Fatal(srv.ListenAndServe())
 }
 

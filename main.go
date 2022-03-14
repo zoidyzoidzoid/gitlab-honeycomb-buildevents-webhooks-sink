@@ -4,8 +4,9 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -17,51 +18,39 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// This is the default value that should be overridden in the
+// Version is the default value that should be overridden in the
 // build/release process.
 var Version = "dev"
 
-func home(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintf(w, `# GitLab Honeycomb Buildevents Webhooks Sink
+func home(w http.ResponseWriter, _ *http.Request) {
+	_, err := fmt.Fprintf(w, `# GitLab Honeycomb Buildevents Webhooks Sink
 
 GET /healthz: healthcheck
 
 POST /api/message: receive array of notifications
 `)
+	if err != nil {
+		log.Printf("home: failed to write to http response writer: %s", err)
+	}
 }
 
-func healthz(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintf(w, "OK\n")
+func healthz(w http.ResponseWriter, _ *http.Request) {
+	w.WriteHeader(http.StatusOK)
 }
 
-func createEvent(cfg *libhoney.Config) *libhoney.Event {
+func createEvent(cfg *libhoney.Config) (*libhoney.Event, error) {
 	libhoney.UserAgentAddition = fmt.Sprintf("buildevents/%s", Version)
 	libhoney.UserAgentAddition += fmt.Sprintf(" (%s)", "GitLab-CI")
 
 	if cfg.APIKey == "" {
 		cfg.Transmission = &transmission.WriterSender{}
 	}
-	libhoney.Init(*cfg)
 
 	ev := libhoney.NewEvent()
 	ev.AddField("ci_provider", "GitLab-CI")
 	ev.AddField("meta.version", Version)
 
-	return ev
-}
-
-func parseTime(dt string) (*time.Time, error) {
-	var timestamp time.Time
-	// Try GitLab upstream datetime format
-	timestamp, err := time.Parse("2006-01-02 15:04:05 MST", dt)
-	if err != nil {
-		// Try our GitLab Enterprise datetime format
-		timestamp, err = time.Parse("2006-01-02 15:04:05 -0700", dt)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return &timestamp, nil
+	return ev, nil
 }
 
 func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) (*libhoney.Event, error) {
@@ -72,10 +61,14 @@ func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) (*libhoney.Event,
 		return nil, nil
 	}
 	traceID := fmt.Sprint(p.ObjectAttributes.ID)
-	ev := createEvent(cfg)
+	ev, err := createEvent(cfg)
+	if err != nil {
+		return nil, err
+	}
+
 	defer ev.Send()
 	buildURL := fmt.Sprintf("%s/-/pipelines/%d", p.Project.WebURL, p.ObjectAttributes.ID)
-	ev.Add(map[string]interface{}{
+	err = ev.Add(map[string]interface{}{
 		// Basic trace information
 		"service_name":   "pipeline",
 		"trace.span_id":  traceID,
@@ -98,16 +91,15 @@ func createTraceFromPipeline(cfg *libhoney.Config, p Pipeline) (*libhoney.Event,
 		"duration_ms":        p.ObjectAttributes.Duration * 1000,
 		"queued_duration_ms": p.ObjectAttributes.QueuedDuration * 1000,
 	})
-
-	timestamp, err := parseTime(p.ObjectAttributes.CreatedAt)
-	// This error handling is a bit janky, I should tidy it up
 	if err != nil {
-		log.Println("Failed to parse timestamp:", err)
-		fmt.Printf("%+v\n", ev)
-		return ev, err
+		return nil, fmt.Errorf("failed to add fields to event: %w", err)
 	}
-	ev.Timestamp = *timestamp
-	fmt.Printf("%+v\n", ev)
+
+	if p.ObjectAttributes.CreatedAt.IsZero() {
+		return nil, errors.New("Pipeline.ObjectAttributes.CreatedAt is zero")
+	}
+	ev.Timestamp = p.ObjectAttributes.CreatedAt
+	log.Printf("%+v\n", ev)
 	return ev, nil
 }
 
@@ -122,9 +114,13 @@ func createTraceFromJob(cfg *libhoney.Config, j Job) (*libhoney.Event, error) {
 	md5HashInBytes := md5.Sum([]byte(j.BuildName))
 	md5HashInString := hex.EncodeToString(md5HashInBytes[:])
 	spanID := md5HashInString
-	ev := createEvent(cfg)
+	ev, err := createEvent(cfg)
+	if err != nil {
+		return nil, err
+	}
+
 	defer ev.Send()
-	ev.Add(map[string]interface{}{
+	err = ev.Add(map[string]interface{}{
 		// Basic trace information
 		"service_name":    "job",
 		"trace.span_id":   spanID,
@@ -149,15 +145,15 @@ func createTraceFromJob(cfg *libhoney.Config, j Job) (*libhoney.Event, error) {
 		"duration_ms":        j.BuildDuration * 1000,
 		"queued_duration_ms": j.BuildQueuedDuration * 1000,
 	})
-	timestamp, err := parseTime(j.BuildStartedAt)
-	// This error handling is a bit janky, I should tidy it up
 	if err != nil {
-		log.Println("Failed to parse timestamp:", err)
-		fmt.Printf("%+v\n", ev)
-		return ev, err
+		return nil, fmt.Errorf("failed to add fields to event: %w", err)
 	}
-	ev.Timestamp = *timestamp
-	fmt.Printf("%+v\n", ev)
+
+	if j.BuildStartedAt.IsZero() {
+		return nil, errors.New("BuildStartedAt time is not set")
+	}
+	ev.Timestamp = j.BuildStartedAt
+	log.Printf("%+v\n", ev)
 	return ev, nil
 }
 
@@ -166,7 +162,7 @@ func handlePipeline(cfg *libhoney.Config, w http.ResponseWriter, body []byte) {
 	var pipeline Pipeline
 	err := json.Unmarshal(body, &pipeline)
 	if err != nil {
-		log.Print("Error unmarshalling request body.")
+		log.Printf("Error unmarshalling request body: %s", err)
 		_, printErr := fmt.Fprintf(w, "Error unmarshalling request body.")
 		if printErr != nil {
 			log.Print("Error printing error on error unmarshalling request body.")
@@ -176,10 +172,17 @@ func handlePipeline(cfg *libhoney.Config, w http.ResponseWriter, body []byte) {
 	_, err = createTraceFromPipeline(cfg, pipeline)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "Error creating trace from pipeline object: %s", err)
+		_, respErr := fmt.Fprintf(w, "Error creating trace from pipeline object: %s", err)
+		if respErr != nil {
+			log.Printf("failed to write error response: %s", respErr)
+		}
 		return
 	}
-	fmt.Fprintf(w, "Thanks!\n")
+
+	_, respErr := fmt.Fprint(w, "Thanks!\n")
+	if respErr != nil {
+		log.Printf("failed to write success response: %s", respErr)
+	}
 }
 
 // buildevents step $CI_PIPELINE_ID $STEP_SPAN_ID $STEP_START $CI_JOB_NAME
@@ -198,10 +201,17 @@ func handleJob(cfg *libhoney.Config, w http.ResponseWriter, body []byte) {
 	_, err = createTraceFromJob(cfg, job)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "Error creating trace from job object: %s", err)
+		_, respErr := fmt.Fprintf(w, "Error creating trace from job object: %s", err)
+		if respErr != nil {
+			log.Printf("failed to write error response: %s", respErr)
+		}
 		return
 	}
-	fmt.Fprintf(w, "Thanks!\n")
+
+	_, respErr := fmt.Fprint(w, "Thanks!\n")
+	if respErr != nil {
+		log.Printf("failed to write success response: %s", respErr)
+	}
 }
 
 func handleRequest(cfg *libhoney.Config, w http.ResponseWriter, req *http.Request) {
@@ -209,16 +219,19 @@ func handleRequest(cfg *libhoney.Config, w http.ResponseWriter, req *http.Reques
 		http.Error(w, "Unsupported method", http.StatusMethodNotAllowed)
 		return
 	}
-	eventHeaders := req.Header["X-Gitlab-Event"]
-	if len(eventHeaders) < 1 {
+	eventHeaders, exists := req.Header["X-Gitlab-Event"]
+	if !exists {
 		http.Error(w, "Missing header: X-Giitlab-Event", http.StatusBadRequest)
 		return
-	} else if len(eventHeaders) > 1 {
+	}
+
+	if len(eventHeaders) > 1 {
 		http.Error(w, "Invalid header: X-Gitlab-Event", http.StatusBadRequest)
 		return
 	}
+
 	eventType := eventHeaders[0]
-	body, err := ioutil.ReadAll(req.Body)
+	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		log.Print("Error reading request body.")
 		_, printErr := fmt.Fprintf(w, "Error reading request body.")
@@ -227,15 +240,16 @@ func handleRequest(cfg *libhoney.Config, w http.ResponseWriter, req *http.Reques
 		}
 		return
 	}
-	if eventType == "Pipeline Hook" {
-		fmt.Println("Received pipeline webhook:", string(body))
+
+	switch eventType {
+	case "Pipeline Hook":
+		log.Println("Received pipeline webhook:", string(body))
 		handlePipeline(cfg, w, body)
-	} else if eventType == "Job Hook" {
-		fmt.Println("Received job webhook:", string(body))
+	case "Job Hook":
+		log.Println("Received job webhook:", string(body))
 		handleJob(cfg, w, body)
-	} else {
+	default:
 		http.Error(w, fmt.Sprintf("Invalid event type: %s", eventType), http.StatusBadRequest)
-		return
 	}
 }
 
@@ -252,17 +266,26 @@ about your Continuous Integration builds.`,
 	root.PersistentFlags().StringVarP(&cfg.APIKey, "apikey", "k", "", "[env.BUILDEVENT_APIKEY] the Honeycomb authentication token")
 	if apikey, ok := os.LookupEnv("BUILDEVENT_APIKEY"); ok {
 		// https://github.com/spf13/viper/issues/461#issuecomment-366831834
-		root.PersistentFlags().Lookup("apikey").Value.Set(apikey)
+		err := root.PersistentFlags().Lookup("apikey").Value.Set(apikey)
+		if err != nil {
+			log.Fatalf("failed to configure `apikey`: %s", err)
+		}
 	}
 
 	root.PersistentFlags().StringVarP(&cfg.Dataset, "dataset", "d", "buildevents", "[env.BUILDEVENT_DATASET] the name of the Honeycomb dataset to which to send these events")
 	if dataset, ok := os.LookupEnv("BUILDEVENT_DATASET"); ok {
-		root.PersistentFlags().Lookup("dataset").Value.Set(dataset)
+		err := root.PersistentFlags().Lookup("dataset").Value.Set(dataset)
+		if err != nil {
+			log.Fatalf("failed to configure `dataset`: %s", err)
+		}
 	}
 
 	root.PersistentFlags().StringVarP(&cfg.APIHost, "apihost", "a", "https://api.honeycomb.io", "[env.BUILDEVENT_APIHOST] the hostname for the Honeycomb API server to which to send this event")
 	if apihost, ok := os.LookupEnv("BUILDEVENT_APIHOST"); ok {
-		root.PersistentFlags().Lookup("apihost").Value.Set(apihost)
+		err := root.PersistentFlags().Lookup("apihost").Value.Set(apihost)
+		if err != nil {
+			log.Fatalf("failed to configure `apihost`: %s", err)
+		}
 	}
 
 	return root
@@ -279,6 +302,12 @@ func main() {
 		libhoney.Close()
 		os.Exit(1)
 	}
+
+	err := libhoney.Init(config)
+	if err != nil {
+		log.Fatalf("failed to initialise libhoney: %s", err)
+	}
+
 	log.SetOutput(os.Stdout)
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", healthz)
@@ -297,7 +326,7 @@ func main() {
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
-	fmt.Printf("Starting server on http://%s\n", srv.Addr)
+	log.Printf("Starting server on http://%s\n", srv.Addr)
 	log.Fatal(srv.ListenAndServe())
 }
 
@@ -332,9 +361,9 @@ type Build struct {
 	Stage         string        `json:"stage"`
 	Name          string        `json:"name"`
 	Status        string        `json:"status"`
-	CreatedAt     string        `json:"created_at"`
-	StartedAt     *string       `json:"started_at"`
-	FinishedAt    *string       `json:"finished_at"`
+	CreatedAt     time.Time     `json:"created_at"`
+	StartedAt     time.Time     `json:"started_at"`
+	FinishedAt    time.Time     `json:"finished_at"`
 	When          string        `json:"when"`
 	Manual        bool          `json:"manual"`
 	AllowFailure  bool          `json:"allow_failure"`
@@ -405,8 +434,8 @@ type PipelineObjectAttributes struct {
 	Source         string     `json:"source"`
 	Status         string     `json:"status"`
 	Stages         []string   `json:"stages"`
-	CreatedAt      string     `json:"created_at"`
-	FinishedAt     string     `json:"finished_at"`
+	CreatedAt      time.Time  `json:"created_at"`
+	FinishedAt     time.Time  `json:"finished_at"`
 	Duration       int64      `json:"duration"`
 	QueuedDuration int64      `json:"queued_duration"`
 	Variables      []Variable `json:"variables"`
@@ -457,9 +486,9 @@ type Job struct {
 	BuildName           string      `json:"build_name"`
 	BuildStage          string      `json:"build_stage"`
 	BuildStatus         string      `json:"build_status"`
-	BuildCreatedAt      string      `json:"build_created_at"`
-	BuildStartedAt      string      `json:"build_started_at"`
-	BuildFinishedAt     string      `json:"build_finished_at"`
+	BuildCreatedAt      time.Time   `json:"build_created_at"`
+	BuildStartedAt      time.Time   `json:"build_started_at"`
+	BuildFinishedAt     time.Time   `json:"build_finished_at"`
 	BuildDuration       float64     `json:"build_duration"`
 	BuildQueuedDuration float64     `json:"build_queued_duration"`
 	BuildAllowFailure   bool        `json:"build_allow_failure"`

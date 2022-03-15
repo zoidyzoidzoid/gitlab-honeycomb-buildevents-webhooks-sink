@@ -20,6 +20,7 @@ import (
 
 // Version is the default value that should be overridden in the
 // build/release process.
+// TODO: Actually set this
 var Version = "dev"
 
 func home(w http.ResponseWriter, _ *http.Request) {
@@ -39,17 +40,20 @@ func healthz(w http.ResponseWriter, _ *http.Request) {
 }
 
 func createEvent(cfg *libhoney.Config) (*libhoney.Event, error) {
-	libhoney.UserAgentAddition = fmt.Sprintf("buildevents/%s", Version)
-	libhoney.UserAgentAddition += fmt.Sprintf(" (%s)", "GitLab-CI")
+	libhoney.UserAgentAddition = fmt.Sprintf("buildevents/%s (GitLab-CI)", Version)
 
 	if cfg.APIKey == "" {
 		cfg.Transmission = &transmission.WriterSender{}
 	}
 
+	// TODO: I thinks this should maybe be not using the default package-level client
 	ev := libhoney.NewEvent()
-	ev.AddField("ci_provider", "GitLab-CI")
-	ev.AddField("meta.version", Version)
-
+	ev.Add(
+		map[string]interface{}{
+			"ci_provider":  "GitLab-CI",
+			"meta.version": Version,
+		},
+	)
 	return ev, nil
 }
 
@@ -214,7 +218,7 @@ func handleJob(cfg *libhoney.Config, w http.ResponseWriter, body []byte) {
 	}
 }
 
-func handleRequest(cfg *libhoney.Config, w http.ResponseWriter, req *http.Request) {
+func handleRequest(defaultConfig *libhoney.Config, w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		http.Error(w, "Unsupported method", http.StatusMethodNotAllowed)
 		return
@@ -239,6 +243,27 @@ func handleRequest(cfg *libhoney.Config, w http.ResponseWriter, req *http.Reques
 			log.Print("Error printing error on error reading request body.")
 		}
 		return
+	}
+
+	// Load potential custom query parameters
+	// e.g. API key, dataset name, and honeycomb host
+	// TODO: check for additional unsupported query parameters
+	cfg := &libhoney.Config{}
+	cfg.APIKey = defaultConfig.APIKey
+	cfg.Dataset = defaultConfig.Dataset
+	cfg.APIHost = defaultConfig.APIHost
+	query := req.URL.Query()
+	key := query.Get("api_key")
+	if key != "" {
+		cfg.APIKey = key
+	}
+	dataset := query.Get("dataset")
+	if dataset != "" {
+		cfg.Dataset = dataset
+	}
+	host := query.Get("api_host")
+	if host != "" {
+		cfg.APIHost = host
 	}
 
 	switch eventType {

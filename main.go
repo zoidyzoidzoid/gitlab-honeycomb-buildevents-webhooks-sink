@@ -48,9 +48,12 @@ func createEvent(cfg *libhoney.Config) (*libhoney.Event, error) {
 
 	// TODO: I thinks this should maybe be not using the default package-level client
 	ev := libhoney.NewEvent()
-	ev.AddField("ci_provider", "GitLab-CI")
-	ev.AddField("meta.version", Version)
-
+	ev.Add(
+		map[string]interface{}{
+			"ci_provider":  "GitLab-CI",
+			"meta.version": Version,
+		},
+	)
 	return ev, nil
 }
 

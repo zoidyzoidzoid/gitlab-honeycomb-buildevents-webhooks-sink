@@ -3,6 +3,7 @@ module github.com/zoidbergwill/gitlab-honeycomb-buildevents-webhooks-sink
 go 1.17
 
 require (
+	github.com/Deichindianer/webhooks/v6 v6.0.1
 	github.com/honeycombio/libhoney-go v1.15.8
 	github.com/spf13/cobra v1.4.0
 )

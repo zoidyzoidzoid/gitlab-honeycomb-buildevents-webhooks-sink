@@ -159,6 +159,7 @@ func (l *Listener) handlePipeline(p gitlab.PipelineEventPayload) error {
 		"repo":    p.Project.WebURL,
 		// TODO: Something with pipeline status
 		"status": p.ObjectAttributes.Status,
+		"source": p.ObjectAttributes.Source,
 
 		"duration_ms": p.ObjectAttributes.Duration * 1000,
 	})

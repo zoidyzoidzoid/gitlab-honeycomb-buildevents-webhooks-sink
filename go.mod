@@ -1,5 +1,6 @@
 module github.com/zoidbergwill/gitlab-honeycomb-buildevents-webhooks-sink
 
+// +heroku goVersion 1.17
 go 1.17
 
 require (

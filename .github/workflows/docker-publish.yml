@@ -6,8 +6,6 @@ name: Docker
 # documentation.
 
 on:
-  schedule:
-    - cron: '30 11 * * *'
   push:
     branches: [ development ]
     # Publish tags as releases.

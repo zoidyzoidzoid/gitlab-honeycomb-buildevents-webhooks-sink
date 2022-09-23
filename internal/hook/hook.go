@@ -184,7 +184,8 @@ func (l *Listener) handleJob(j types.JobEventPayload) error {
 		return nil
 	}
 	parentTraceID := fmt.Sprint(j.PipelineID)
-	md5HashInBytes := md5.Sum([]byte(j.BuildName))
+	buildNameWithId := fmt.Sprintf("%s%d", j.BuildName, j.BuildID)
+	md5HashInBytes := md5.Sum([]byte(buildNameWithId))
 	md5HashInString := hex.EncodeToString(md5HashInBytes[:])
 	spanID := md5HashInString
 	ev, err := l.createEvent()

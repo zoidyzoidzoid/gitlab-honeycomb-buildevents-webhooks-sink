@@ -168,10 +168,10 @@ func (l *Listener) handlePipeline(p types.PipelineEventPayload) error {
 		return fmt.Errorf("failed to add fields to event: %w", err)
 	}
 
-	if p.ObjectAttributes.CreatedAt.IsZero() {
+	if time.Time(p.ObjectAttributes.CreatedAt).IsZero() {
 		return errors.New("Pipeline.ObjectAttributes.CreatedAt is zero")
 	}
-	ev.Timestamp = p.ObjectAttributes.CreatedAt
+	ev.Timestamp = time.Time(p.ObjectAttributes.CreatedAt)
 	log.Printf("%+v\n", ev)
 	return nil
 }
@@ -222,11 +222,11 @@ func (l *Listener) handleJob(j types.JobEventPayload) error {
 		return fmt.Errorf("failed to add fields to event: %w", err)
 	}
 
-	if j.BuildStartedAt.IsZero() {
+	if time.Time(j.BuildStartedAt).IsZero() {
 		return errors.New("BuildStartedAt time is not set")
 	}
 
-	ev.Timestamp = j.BuildStartedAt
+	ev.Timestamp = time.Time(j.BuildStartedAt)
 	return nil
 }
 

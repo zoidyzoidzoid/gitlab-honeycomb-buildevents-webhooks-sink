@@ -1,6 +1,10 @@
 package types
 
-import "time"
+import (
+	"encoding/json"
+	"strings"
+	"time"
+)
 
 // Commit contains all of the GitLab commit information
 type Commit struct {
@@ -66,4 +70,25 @@ type Runner struct {
 	Description string `json:"description"`
 	Active      bool   `json:"active"`
 	IsShared    bool   `json:"is_shared"`
+}
+
+type GitLabTimestamp time.Time
+
+func (timestamp *GitLabTimestamp) UnmarshalJSON(b []byte) error {
+	s := strings.Trim(string(b), "\"")
+	if s == "null" {
+		return nil
+	}
+	// 2022-10-17 14:44:20 +1300 -> GitLab Timestamp Format
+	// 2006-01-02T15:04:05Z07:00 -> Go Str Pattern
+	t, err := time.Parse("2006-01-02 15:04:05 -0700", s)
+	if err != nil {
+		return err
+	}
+	*timestamp = GitLabTimestamp(t)
+	return nil
+}
+
+func (timestamp *GitLabTimestamp) MarshalJSON() ([]byte, error) {
+	return json.Marshal(time.Time(*timestamp))
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/zoidbergwill/gitlab-honeycomb-buildevents-webhooks-sink/internal/hook"
 
@@ -14,7 +15,7 @@ import (
 // build/release process.
 var Version = "dev"
 
-func commandRoot(cfg *libhoney.Config) *cobra.Command {
+func commandRoot(cfg *libhoney.Config) (*cobra.Command, bool) {
 	root := &cobra.Command{
 		Version: Version,
 		Use:     "buildevents",
@@ -49,14 +50,23 @@ about your Continuous Integration builds.`,
 		}
 	}
 
-	return root
+	debug := root.PersistentFlags().Bool("debug", false, "[env.DEBUG] set the debug logging to true")
+	if debugEnv, ok := os.LookupEnv("DEBUG"); ok {
+		debugEnvParsed, err := strconv.ParseBool(debugEnv)
+		if err != nil {
+			log.Fatalf("failed to configure `debug`: %s", err)
+		}
+		debug = &debugEnvParsed
+	}
+
+	return root, *debug
 }
 
 func main() {
 	defer libhoney.Close()
 	var config libhoney.Config
 
-	root := commandRoot(&config)
+	root, debug := commandRoot(&config)
 
 	// Do the work
 	if err := root.Execute(); err != nil {
@@ -75,6 +85,7 @@ func main() {
 		Version:         Version,
 		ListenAddr:      ":" + port,
 		HookSecret:      "",
+		Debug:           debug,
 		HoneycombConfig: &config,
 	})
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/zoidbergwill/gitlab-honeycomb-buildevents-webhooks-sink/internal/hook/types"
@@ -48,6 +49,10 @@ func (l *Listener) ParseHook(r *http.Request, event string) (interface{}, error)
 		return nil, ErrPayloadParse{Payload: payload, Err: err}
 	}
 
+	if l.Config.Debug {
+		log.Printf("raw payload: %s", string(payload))
+	}
+
 	switch event {
 	case PipelineEvents:
 		var pe types.PipelineEventPayload
@@ -56,12 +61,20 @@ func (l *Listener) ParseHook(r *http.Request, event string) (interface{}, error)
 			return nil, fmt.Errorf("failed to parse payload into pipeline event: %w", err)
 		}
 
+		if l.Config.Debug {
+			log.Printf("parsed pipeline event: %+v", pe)
+		}
+
 		return pe, nil
 	case JobEvents:
 		var je types.JobEventPayload
 		err = json.Unmarshal(payload, &je)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse payload into job event: %w", err)
+		}
+
+		if l.Config.Debug {
+			log.Printf("parsed job event: %+v", je)
 		}
 
 		return je, nil

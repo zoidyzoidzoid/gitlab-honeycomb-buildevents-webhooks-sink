@@ -24,6 +24,7 @@ type Config struct {
 	Version         string
 	ListenAddr      string
 	HookSecret      string
+	Debug           bool
 	HoneycombConfig *libhoney.Config
 }
 

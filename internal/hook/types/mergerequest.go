@@ -4,29 +4,29 @@ import "time"
 
 // MergeRequest contains all the GitLab merge request information
 type MergeRequest struct {
-	ID              int64      `json:"id"`
-	TargetBranch    string     `json:"target_branch"`
-	SourceBranch    string     `json:"source_branch"`
-	SourceProjectID int64      `json:"source_project_id"`
-	AssigneeID      int64      `json:"assignee_id"`
-	AuthorID        int64      `json:"author_id"`
-	Title           string     `json:"title"`
-	CreatedAt       time.Time  `json:"created_at"`
-	UpdatedAt       time.Time  `json:"updated_at"`
-	MilestoneID     int64      `json:"milestone_id"`
-	State           string     `json:"state"`
-	MergeStatus     string     `json:"merge_status"`
-	TargetProjectID int64      `json:"target_project_id"`
-	IID             int64      `json:"iid"`
-	Description     string     `json:"description"`
-	Position        int64      `json:"position"`
-	LockedAt        time.Time  `json:"locked_at"`
-	Source          Source     `json:"source"`
-	Target          Target     `json:"target"`
-	LastCommit      LastCommit `json:"last_commit"`
-	WorkInProgress  bool       `json:"work_in_progress"`
-	Assignee        User       `json:"assignee"`
-	URL             string     `json:"url"`
+	ID              int64           `json:"id"`
+	TargetBranch    string          `json:"target_branch"`
+	SourceBranch    string          `json:"source_branch"`
+	SourceProjectID int64           `json:"source_project_id"`
+	AssigneeID      int64           `json:"assignee_id"`
+	AuthorID        int64           `json:"author_id"`
+	Title           string          `json:"title"`
+	CreatedAt       GitLabTimestamp `json:"created_at,omitempty"`
+	UpdatedAt       GitLabTimestamp `json:"updated_at,omitempty"`
+	MilestoneID     int64           `json:"milestone_id"`
+	State           string          `json:"state"`
+	MergeStatus     string          `json:"merge_status"`
+	TargetProjectID int64           `json:"target_project_id"`
+	IID             int64           `json:"iid"`
+	Description     string          `json:"description"`
+	Position        int64           `json:"position"`
+	LockedAt        GitLabTimestamp `json:"locked_at,omitempty"`
+	Source          Source          `json:"source"`
+	Target          Target          `json:"target"`
+	LastCommit      LastCommit      `json:"last_commit"`
+	WorkInProgress  bool            `json:"work_in_progress"`
+	Assignee        User            `json:"assignee"`
+	URL             string          `json:"url"`
 }
 
 // Source contains all the GitLab source information

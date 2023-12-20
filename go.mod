@@ -1,4 +1,4 @@
-module github.com/zoidbergwill/gitlab-honeycomb-buildevents-webhooks-sink
+module github.com/zoidyzoidzoid/gitlab-honeycomb-buildevents-webhooks-sink
 
 // +heroku goVersion 1.18
 go 1.18

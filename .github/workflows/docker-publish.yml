@@ -9,7 +9,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: zoidbergwill/gl-hc-sink
+  IMAGE_NAME: zoidyzoidzoid/gl-hc-sink
 
 jobs:
   build:
@@ -23,9 +23,9 @@ jobs:
         uses: actions/checkout@v4
       - name: Install cosign
         if: github.event_name != 'pull_request'
-        uses: sigstore/cosign-installer@v3.1.1
+        uses: sigstore/cosign-installer@v3.7.0
         with:
-          cosign-release: 'v2.2.1'
+          cosign-release: 'v2.4.1'
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx

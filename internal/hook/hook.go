@@ -12,7 +12,7 @@ import (
 
 	"github.com/honeycombio/libhoney-go"
 	"github.com/honeycombio/libhoney-go/transmission"
-	"github.com/zoidbergwill/gitlab-honeycomb-buildevents-webhooks-sink/internal/hook/types"
+	"github.com/zoidyzoidzoid/gitlab-honeycomb-buildevents-webhooks-sink/internal/hook/types"
 )
 
 type Listener struct {
@@ -48,7 +48,7 @@ func New(cfg Config) (*Listener, error) {
 	mux.HandleFunc("/", l.Home)
 
 	srv := &http.Server{
-		Addr:         fmt.Sprintf(cfg.ListenAddr),
+		Addr:         cfg.ListenAddr,
 		Handler:      mux,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
@@ -129,6 +129,13 @@ func (l *Listener) HandleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func SendEvent(e *libhoney.Event) {
+	err := e.Send()
+	if err != nil {
+		fmt.Printf("failed to send event: %s", err)
+	}
+}
+
 func (l *Listener) handlePipeline(p types.PipelineEventPayload) error {
 	if p.ObjectAttributes.Duration == 0 || p.ObjectAttributes.Status == "running" {
 		return nil
@@ -140,7 +147,7 @@ func (l *Listener) handlePipeline(p types.PipelineEventPayload) error {
 		return err
 	}
 
-	defer ev.Send()
+	defer SendEvent(ev)
 	buildURL := fmt.Sprintf("%s/-/pipelines/%d", p.Project.WebURL, p.ObjectAttributes.ID)
 	err = ev.Add(map[string]interface{}{
 		// Basic trace information
@@ -194,14 +201,14 @@ func (l *Listener) handleJob(j types.JobEventPayload) error {
 		return err
 	}
 
-	defer ev.Send()
+	defer SendEvent(ev)
 	err = ev.Add(map[string]interface{}{
 		// Basic trace information
 		"service_name":    "job",
 		"trace.span_id":   spanID,
 		"trace.trace_id":  parentTraceID,
 		"trace.parent_id": parentTraceID,
-		"name":            fmt.Sprintf(j.BuildName),
+		"name":            j.BuildName,
 
 		// CI information
 		"ci_provider": "GitLab-CI",
@@ -210,12 +217,14 @@ func (l *Listener) handleJob(j types.JobEventPayload) error {
 		"build_id":    j.BuildID,
 		"repo":        j.Repository.Homepage,
 		// TODO: Something with job status
-		"status": j.BuildStatus,
+		"status":              j.BuildStatus,
+		"queued_duration_ms":  j.BuildQueuedDuration * 1000,
+		"queued_duration_min": j.BuildQueuedDuration / 60,
 
 		// Runner information
 		"ci_runner":    j.Runner.Description,
 		"ci_runner_id": j.Runner.ID,
-		//"ci_runner_tags": strings.Join(j.Runner.Tags, ","),
+		// "ci_runner_tags": strings.Join(j.Runner.Tags, ","),
 
 		"duration_ms": j.BuildDuration * 1000,
 	})

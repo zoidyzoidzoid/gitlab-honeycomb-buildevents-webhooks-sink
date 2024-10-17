@@ -8,7 +8,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/zoidbergwill/gitlab-honeycomb-buildevents-webhooks-sink/internal/hook/types"
+	"github.com/zoidyzoidzoid/gitlab-honeycomb-buildevents-webhooks-sink/internal/hook/types"
 )
 
 var (

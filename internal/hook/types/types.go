@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// Commit contains all of the GitLab commit information
+// Commit contains all of the GitLab commit information.
 type Commit struct {
 	ID        string    `json:"id"`
 	Message   string    `json:"message"`
@@ -19,13 +19,13 @@ type Commit struct {
 	Removed   []string  `json:"removed"`
 }
 
-// Author contains all of the GitLab author information
+// Author contains all of the GitLab author information.
 type Author struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
 }
 
-// Project contains all of the GitLab project information
+// Project contains all of the GitLab project information.
 type Project struct {
 	ID                int64  `json:"id"`
 	Name              string `json:"name"`
@@ -44,7 +44,7 @@ type Project struct {
 	HTTPURL           string `json:"http_url"`
 }
 
-// Repository contains all of the GitLab repository information
+// Repository contains all of the GitLab repository information.
 type Repository struct {
 	Name            string `json:"name"`
 	URL             string `json:"url"`
@@ -55,7 +55,7 @@ type Repository struct {
 	VisibilityLevel int64  `json:"visibility_level"`
 }
 
-// User contains all of the GitLab user information
+// User contains all of the GitLab user information.
 type User struct {
 	ID        int64  `json:"id"`
 	Name      string `json:"name"`
@@ -64,7 +64,7 @@ type User struct {
 	Email     string `json:"email"`
 }
 
-// Runner represents a runner agent
+// Runner represents a runner agent.
 type Runner struct {
 	ID          int64  `json:"id"`
 	Description string `json:"description"`

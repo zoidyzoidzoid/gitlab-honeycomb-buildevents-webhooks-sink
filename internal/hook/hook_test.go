@@ -1,8 +1,9 @@
 package hook
 
 import (
-	"github.com/honeycombio/libhoney-go"
 	"testing"
+
+	"github.com/honeycombio/libhoney-go"
 )
 
 func Test_createEvent(t *testing.T) {
@@ -19,6 +20,9 @@ func Test_createEvent(t *testing.T) {
 			HookSecret:      "",
 			HoneycombConfig: &config,
 		})
+		if err != nil {
+			t.Errorf("failed to create config: %s", err)
+		}
 		got, err := l.createEvent()
 		if err != nil {
 			t.Errorf("failed to create event: %s", err)
@@ -35,7 +39,7 @@ func Test_createEvent(t *testing.T) {
 	})
 }
 
-//func Test_HandlePipeline(t *testing.T) {
+// func Test_HandlePipeline(t *testing.T) {
 //	defer libhoney.Close()
 //	var config libhoney.Config
 //	tests := []struct {

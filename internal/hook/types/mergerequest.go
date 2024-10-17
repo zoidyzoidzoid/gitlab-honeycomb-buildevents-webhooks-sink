@@ -2,7 +2,7 @@ package types
 
 import "time"
 
-// MergeRequest contains all the GitLab merge request information
+// MergeRequest contains all the GitLab merge request information.
 type MergeRequest struct {
 	ID              int64           `json:"id"`
 	TargetBranch    string          `json:"target_branch"`
@@ -29,7 +29,7 @@ type MergeRequest struct {
 	URL             string          `json:"url"`
 }
 
-// Source contains all the GitLab source information
+// Source contains all the GitLab source information.
 type Source struct {
 	Name              string `json:"name"`
 	Description       string `json:"description"`
@@ -47,7 +47,7 @@ type Source struct {
 	HTTPURL           string `json:"http_url"`
 }
 
-// Target contains all the GitLab target information
+// Target contains all the GitLab target information.
 type Target struct {
 	Name              string `json:"name"`
 	Description       string `json:"description"`
@@ -65,7 +65,7 @@ type Target struct {
 	HTTPURL           string `json:"http_url"`
 }
 
-// LastCommit contains all the GitLab last commit information
+// LastCommit contains all the GitLab last commit information.
 type LastCommit struct {
 	ID        string    `json:"id"`
 	Message   string    `json:"message"`

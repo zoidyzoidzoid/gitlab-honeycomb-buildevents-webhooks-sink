@@ -5,10 +5,9 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/zoidbergwill/gitlab-honeycomb-buildevents-webhooks-sink/internal/hook"
-
 	"github.com/honeycombio/libhoney-go"
 	"github.com/spf13/cobra"
+	"github.com/zoidyzoidzoid/gitlab-honeycomb-buildevents-webhooks-sink/internal/hook"
 )
 
 // Version is the default value that should be overridden in the

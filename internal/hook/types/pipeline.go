@@ -1,6 +1,6 @@
 package types
 
-// PipelineEventPayload contains the information for GitLab's pipeline status change event
+// PipelineEventPayload contains the information for GitLab's pipeline status change event.
 type PipelineEventPayload struct {
 	ObjectKind       string                   `json:"object_kind"`
 	User             User                     `json:"user"`
@@ -11,7 +11,7 @@ type PipelineEventPayload struct {
 	Builds           []Build                  `json:"builds"`
 }
 
-// PipelineObjectAttributes contains pipeline specific GitLab object attributes information
+// PipelineObjectAttributes contains pipeline specific GitLab object attributes information.
 type PipelineObjectAttributes struct {
 	ID         int64           `json:"id"`
 	Ref        string          `json:"ref"`
@@ -27,13 +27,13 @@ type PipelineObjectAttributes struct {
 	Variables  []Variable      `json:"variables"`
 }
 
-// Variable contains pipeline variables
+// Variable contains pipeline variables.
 type Variable struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
 }
 
-// Build contains all of the GitLab Build information
+// Build contains all of the GitLab Build information.
 type Build struct {
 	ID            int64           `json:"id"`
 	Stage         string          `json:"stage"`
@@ -49,7 +49,7 @@ type Build struct {
 	ArtifactsFile ArtifactsFile   `json:"artifactsfile"`
 }
 
-// ArtifactsFile contains all of the GitLab artifact information
+// ArtifactsFile contains all of the GitLab artifact information.
 type ArtifactsFile struct {
 	Filename string `json:"filename"`
 	Size     string `json:"size"`

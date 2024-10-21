@@ -5,7 +5,7 @@ go 1.23
 
 require (
 	github.com/honeycombio/libhoney-go v1.20.0
-	github.com/spf13/cobra v1.8.0
+	github.com/spf13/cobra v1.8.1
 )
 
 require (

@@ -4,7 +4,7 @@ module github.com/zoidyzoidzoid/gitlab-honeycomb-buildevents-webhooks-sink
 go 1.23
 
 require (
-	github.com/honeycombio/libhoney-go v1.20.0
+	github.com/honeycombio/libhoney-go v1.25.0
 	github.com/spf13/cobra v1.8.0
 )
 
@@ -13,9 +13,9 @@ require (
 	github.com/facebookgo/limitgroup v0.0.0-20150612190941-6abd8d71ec01 // indirect
 	github.com/facebookgo/muster v0.0.0-20150708232844-fd3d7953fd52 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/klauspost/compress v1.16.6 // indirect
+	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
+	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	gopkg.in/alexcesaro/statsd.v2 v2.0.0 // indirect
 )
